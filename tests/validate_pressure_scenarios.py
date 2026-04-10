@@ -32,6 +32,8 @@ def main() -> int:
     require(scenarios, "场景 6", "pressure scenarios")
     require(scenarios, "场景 7", "pressure scenarios")
     require(scenarios, "场景 8", "pressure scenarios")
+    require(scenarios, "场景 9", "pressure scenarios")
+    require(scenarios, "场景 10", "pressure scenarios")
 
     for needle in [
         "run_benchmark.py",
@@ -48,6 +50,8 @@ def main() -> int:
         "cinderx-test",
         "长连接交互终端",
         "docker exec",
+        "独立宿主机目录",
+        "bind mount",
     ]:
         require(docker, needle, "docker workflow")
 
@@ -59,6 +63,7 @@ def main() -> int:
         "HIR dump",
         "长连接交互 shell",
         "docker exec",
+        "独立宿主机目录",
     ]:
         require(decision, needle, "entry decision table")
 
@@ -68,6 +73,8 @@ def main() -> int:
         "driver / manager / worker",
         "Kunpeng 宿主机",
         "docker exec",
+        "裸机",
+        "项目隔离性",
     ]:
         require(faq, needle, "faq")
 
@@ -76,6 +83,7 @@ def main() -> int:
         "双线区分",
         "长连接交互终端",
         "正式对照",
+        "宿主机目录",
     ]:
         require(review, needle, "dynamic pressure review")
 
