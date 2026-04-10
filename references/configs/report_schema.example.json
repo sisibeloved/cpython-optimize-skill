@@ -1,0 +1,27 @@
+{
+  "baseline": {
+    "label": "baseline",
+    "branch": "main",
+    "commit": "<sha>"
+  },
+  "candidate": {
+    "label": "candidate",
+    "branch": "feature-branch",
+    "commit": "<sha>"
+  },
+  "benchmarks": [
+    {
+      "name": "nbody",
+      "baseline_mean": 0.0,
+      "candidate_mean": 0.0,
+      "speedup": 1.0,
+      "percent_change": 0.0,
+      "candidate_faster": false
+    }
+  ],
+  "summary": {
+    "count": 1,
+    "geomean_speedup": 1.0,
+    "candidate_faster_count": 0
+  }
+}
