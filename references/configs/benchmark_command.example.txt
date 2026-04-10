@@ -1,1 +1,0 @@
-./python -m pyperformance run --fast -o {output_json}

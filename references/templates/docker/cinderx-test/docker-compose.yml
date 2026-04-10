@@ -1,0 +1,57 @@
+services:
+  cinderx-arm64:
+    image: ${BASE_IMAGE:-cinderx-pyperf-realenv:arm64}
+    build:
+      context: ../cpython-baseline
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    hostname: cinderx-arm64
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Mounts
+    volumes:
+      # CinderX source tree
+      - ../../:/cinderx
+      # Wheel files (from cinderx/dist directory)
+      - ../../dist:/dist:ro
+      # Test scripts
+      - ./scripts:/scripts:ro
+      # Benchmark configs
+      - ./configs:/configs:ro
+      # Pyperformance source tree
+      - ${PYPERFORMANCE_ROOT:-${HOME}/Repo/pyperformance}:/pyperformance:ro
+      # Worker startup hook for CinderX JIT
+      - ../../scripts/arm/pyperf_env_hook:/pyperf_env_hook:ro
+      # Benchmark results
+      - ${RESULTS_DIR:-./results}:/results
+      # Cache for pyperformance
+      - cinderx-bench-cache:/root/.cache
+      # Shared CinderX wheel cache
+      - cinderx-wheel-cache:/opt/cinderx-wheel-cache
+
+    # Environment
+    environment:
+      - RESULTS_ROOT=/results
+      - PYTHONUNBUFFERED=1
+      - PYTHONJIT=${PYTHONJIT:-1}
+      - PYTHONJITAUTO=${PYTHONJITAUTO:-50}
+      - PYPERFORMANCE_ROOT=/pyperformance
+      - PYPERFORMANCE_HOOK_ROOT=/pyperf_env_hook
+      - BENCHMARK_CONFIG_ROOT=/configs
+      - CINDERX_SOURCE_ROOT=/cinderx
+      - http_proxy=${http_proxy:-http://host.docker.internal:7890}
+      - https_proxy=${https_proxy:-http://host.docker.internal:7890}
+      - HTTP_PROXY=${HTTP_PROXY:-http://host.docker.internal:7890}
+      - HTTPS_PROXY=${HTTPS_PROXY:-http://host.docker.internal:7890}
+
+    # Keep container running
+    stdin_open: true
+    tty: true
+
+volumes:
+  cinderx-bench-cache:
+    driver: local
+  cinderx-wheel-cache:
+    name: cinderx-wheel-cache
+    driver: local

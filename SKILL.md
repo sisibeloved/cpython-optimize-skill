@@ -1,59 +1,51 @@
 ---
-name: cpython-optimization-shared
-description: 面向 Windows、macOS 和 Linux 的多 Agent 协作 CPython/CinderX 性能优化共享工作流、脚本与规范。
-tags: [cpython, cinderx, performance, benchmarking, multi-agent, cross-platform]
-compatible_agents: [codex, claude-code, opencode, openclaw]
-compatible_environments: [linux, macos, windows-wsl]
+name: cpython-cinderx-optimize
+description: Use when开展 CPython/CinderX 性能优化、远程基准测试、JIT/非JIT 用例分析，且需要复用个人工作流、平台包装和结构化产物约定。
 ---
 
-# CPython 优化共享技能
+# CPython/CinderX 优化技能
 
-## 目标
-该技能用于标准化 CPython/CinderX 优化中的重复性任务：
-- 为本地开发快速完成可运行基准测试的环境初始化。
-- 可复现实验的基准测试执行，并产出可机读的结果文件。
-- 安全地执行分支间对比，不污染上游分支。
-- 统一指标解析与报告格式，使不同 Agent 的输出可比较。
+这是一个面向个人工作流的 `v0.2` 技能仓库，当前版本以 **CinderX 优先** 的视角组织。
 
-该仓库旨在通过 GitHub 在多个协作 Agent 之间复用。
+本仓库采用两层结构：
+- 核心层：见 `core/SKILL.md`
+- 平台薄包装：见 `platforms/`
 
-## 核心原则
-1. 不要把临时的基准测试改动提交到上游分支。
-2. 保持本地分支与 worktree 干净且可丢弃。
-3. 保证测试的隔离性，包括分支隔离、环境隔离、产物隔离、结果隔离。
-4. 使用结构化 JSON 输出，确保各 Agent 可相互消费结果。
+## 使用方式
 
-## 背景
+1. 先进入核心层：`core/SKILL.md`
+2. 再根据当前 Agent 选择平台包装：
+   - Codex：`platforms/codex/SKILL.md`
+   - Claude Code：`platforms/claude-code/SKILL.md`
+   - OpenCode：`platforms/opencode/SKILL.md`
+   - OpenClaw：`platforms/openclaw/SKILL.md`
 
-分析CPython/CinderX在Arm（Kunpeng）服务器上的性能瓶颈、与AMD（9654、9755）的性能差异，修改CPython/CinderX达到优化效果。
+## 当前版本范围
 
-## 前置条件
+本版聚焦以下工作流：
+- 环境获取：SSH 配置、`tmux` 会话复用、远端会话管理
+- CPython/CinderX 编译：环境隔离、强制覆盖安装、远端构建
+- `pyperformance` 测试：命令、环境变量、进程模型、单用例/全量入口
+- 运行时环境隔离：Docker 创建、挂载、镜像与容器复用
+- 文档：目录、命名和实验记录格式
+- 用例分析：
+  - JIT：`HIR -> LIR -> 机器码`
+  - 非 JIT：`字节码 -> uop -> 机器码`
 
-前置条件中部分信息需要用户提供，需要询问用户以确保流程可用。
+## v0.2 增量
 
-### 环境
+- 重构为“核心层 + 四平台薄包装”
+- 补齐 `pyperformance`、Docker、文档、用例分析工作流
+- 收录真实环境命令模板
+- 固化 Docker 双线：
+  - `cpython-baseline`
+  - `cinderx-test`
+- 迁入已验证的 `cinderx-test` 脚本
+- 增加 FAQ、入口决策表、静态/动态 pressure test
 
-- 不要在本地编译（Linux除外）
-- 确认是Arm（Kunpeng）的服务器还是x86（AMD）的服务器
-- 不管在远程服务器还是本地，必须启动Docker容器进行环境隔离
+## 原则
 
-### CPython
-
-- 源码地址
-- Git Tag为3.14.3
-- `gcc == 14.2.0`
-
-### CinderX
-
-- 源码地址正常应为会话所在仓库
-- `gcc == 14.2.0`
-- `Python == 3.14.3`
-- `pyperformance == 1.14.0`
-
-### 环境
-
-## 目录结构
-- `SKILL.md`：该技能的入口与执行约定。
-- `docs/`：快速开始、工作流指南、互操作与故障排查。
-- `references/`：可复用模板、配置与 patch 示例。
-- `scripts/`：可复用脚本。
+- 不在本地盲目编译，优先在目标服务器验证
+- 不污染上游分支，测试性改动默认可丢弃
+- 先拿可复现证据，再下根因结论
+- 用结构化产物沉淀实验结果，避免只留口头结论

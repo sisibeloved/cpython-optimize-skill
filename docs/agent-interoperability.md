@@ -1,20 +1,23 @@
-# Agent 互操作性
+# Agent 互操作
 
-## 支持的 Agent
-- Codex
-- Claude Code
-- OpenCode
-- OpenClaw
+## 目标
+
+让 Codex、Claude Code、OpenCode、OpenClaw 在同一套个人优化工作流下协作，同时不丢失结构化产物。
 
 ## 共享规则
-- 从仓库根目录直接调用脚本。
-- 通过 `--command` 字符串传递基准测试命令。
-- 交换 JSON 产物，不交换临时口头解释。
 
-## 产物交接
+- 统一从仓库根目录进入工作流
+- 交换 JSON、日志、回归结论，不只交换口头描述
+- 平台差异写在 `platforms/`，不写进核心流程
 
-协作时的最小产物集合：
+## 最小交接产物
+
 - `baseline/run.json`
 - `candidate/run.json`
 - `speedup.json`
 - `report.md`
+
+如果是 crash / regression 调查，再补：
+- `debug.log`
+- `jit.log`
+- `bt.txt`
