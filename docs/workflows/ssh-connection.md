@@ -12,12 +12,13 @@
 ## 基本流程
 
 1. 配置 SSH 别名，固定主机名、用户和密钥
-2. 优先用 `rsync` 同步代码仓到远端独立宿主机目录
+2. 先确认 SSH 能稳定登录
 3. 登录后先确认当前 Agent 的宿主机目录是否独立
-4. 优先创建或复用 `tmux` 会话
-5. 进入目标 Docker 容器或先启动对应容器
-6. 长任务统一在 `tmux` 和容器内执行
-7. 断线后优先 `tmux attach`，不要重建上下文
+4. 再用 `rsync` 同步代码仓到远端独立宿主机目录
+5. 优先创建或复用 `tmux` 会话
+6. 进入目标 Docker 容器或先启动对应容器
+7. 长任务统一在 `tmux` 和容器内执行
+8. 断线后优先 `tmux attach`，不要重建上下文
 
 ## 推荐习惯
 
@@ -32,9 +33,11 @@
 ## 最小命令
 
 ```bash
-rsync -a --delete ./ <host>:~/work/<project>-<agent>/
 ssh <host>
 mkdir -p ~/work/<project>-<agent>
+exit
+rsync -a --delete ./ <host>:~/work/<project>-<agent>/
+ssh <host>
 tmux new -s cinderx
 tmux attach -t cinderx
 ```
@@ -43,10 +46,11 @@ tmux attach -t cinderx
 
 优先顺序：
 1. 确认宿主机目录独立
-2. 优先确认代码已通过 `rsync` 同步到当前 Agent 目录
-3. 确认 Docker 可用
-4. 进入或启动目标容器
-5. 再开始编译、测试、调试
+2. 先确认 SSH 登录和远端权限正常
+3. 再确认代码已通过 `rsync` 同步到当前 Agent 目录
+4. 确认 Docker 可用
+5. 进入或启动目标容器
+6. 再开始编译、测试、调试
 
 ## 代码同步约定
 

@@ -47,6 +47,8 @@ def main() -> int:
         "sitecustomize",
         "真实命令",
         "性能口径",
+        "baseline 的定义",
+        "跨平台口径",
     ]:
         require(pyperf, needle, "pyperformance workflow")
 
@@ -73,6 +75,7 @@ def main() -> int:
         "独立宿主机目录",
         "rsync",
         "性能口径",
+        "baseline",
     ]:
         require(decision, needle, "entry decision table")
 
@@ -87,6 +90,7 @@ def main() -> int:
         "rsync",
         "真实命令",
         "性能口径",
+        "baseline",
     ]:
         require(faq, needle, "faq")
 
@@ -114,6 +118,7 @@ def main() -> int:
         "LIR",
         "uop",
         "机器码",
+        "确认是否真的进入 CinderX JIT",
         "热点归因",
         "优化点输出格式",
         "修改方案",

@@ -59,6 +59,15 @@
 3. `CinderX 解释执行`
 4. `CinderX JIT`
 
+默认对照原则：
+- JIT 和 JIT 比
+- 解释执行和解释执行比
+- 这条性能线主要回答：`CinderX` 相对原生 `CPython` 是否有收益
+
+常见组合：
+- `CPython 解释执行` vs `CinderX 解释执行`
+- `CPython JIT` vs `CinderX JIT`
+
 最小区分原则：
 - `CPython 解释执行`：不启 CPython JIT，不启 CinderX JIT
 - `CPython JIT`：只启 CPython JIT
@@ -80,6 +89,36 @@
 注意：
 - `PYTHONJITLOGFILE` / `PYTHONJITDUMPFINALHIR` 这类变量属于调试观测变量，不应默认带入正式性能口径
 - `CinderX 解释执行` 与 `CinderX JIT` 的分界，必须靠是否显式启用 JIT 来确认，而不是只看是否安装了 `cinderx`
+
+## baseline 的定义
+
+`baseline` 这个词至少有两种常见含义，必须在文档和报告里写清楚：
+
+1. 口径基线
+   - 例如 `CPython JIT` 是 `CinderX JIT` 的对照基线
+   - 这条线回答的是：CinderX 相对原生 CPython 是否有收益
+
+2. 提交基线
+   - 例如“改动前那个 commit”
+   - 这条线回答的是：当前改动相对改动前是否提升或退化
+
+禁止混用：
+- 如果是在做“自提升”分析，`baseline` 默认指改动前提交
+- 如果是在做“CinderX vs CPython”分析，`baseline` 默认指对照解释器口径
+- 报告里必须写清：当前 baseline 是“口径基线”还是“提交基线”
+
+## 跨平台口径
+
+Arm vs x86 对比属于第三条线：
+- 隐含前提是参数必须一致
+- 也隐含要求口径一致，例如 `JIT vs JIT`、`解释执行 vs 解释执行`
+
+跨平台对比前至少要对齐：
+- benchmark 命令
+- 关键环境变量
+- JIT 开关状态
+- dump/debug 变量是否开启
+- warmup / loops / affinity 等运行参数
 
 ## 进程模型
 
@@ -107,3 +146,4 @@
 - `bench_command` 类 benchmark 需要特别关注子进程环境继承
 - 如果 `python -m pyperformance run` 行为异常，而单个 `run_benchmark.py` 正常，优先怀疑 worker/外部子进程模型差异
 - dump HIR 时优先用真实测试命令，只叠加 debug 环境变量；不要分裂成“测试命令”和“分析命令”两套口径
+- 做对比前先写清当前属于：口径基线、提交基线，还是跨平台对比

@@ -23,11 +23,50 @@
    - 显式启用 CinderX JIT
    - 并用 HIR / jit.log 证明 benchmark 本体真的编译了
 
+## 默认比较规则
+
+- JIT 和 JIT 比
+- 解释执行和解释执行比
+- 不同口径不能直接横向比较
+
+常见正式比较：
+- `CPython 解释执行` vs `CinderX 解释执行`
+- `CPython JIT` vs `CinderX JIT`
+
 ## 口径边界
 
 - 安装了 `cinderx` 不等于已经进入 `CinderX JIT`
 - 开了 `PYTHONJITLOGFILE` 不等于 benchmark 本体真的进了 JIT
 - `CPython JIT` 和 `CinderX JIT` 不能共用同一套结论
+
+## baseline 的两种含义
+
+1. 口径基线
+   - 对照解释器/运行模式
+   - 例如 `CPython JIT` 是 `CinderX JIT` 的 baseline
+
+2. 提交基线
+   - 改动前的 commit / branch
+   - 用于回答“这次改动相对之前是提升还是退化”
+
+报告中必须显式写清：
+- 当前 baseline 是哪一种
+- 不要把“CPython baseline”和“改动前 baseline”混成一个词
+
+## 跨平台对比
+
+Arm vs x86 属于第三条比较线。
+
+前提：
+- 参数一致
+- 口径一致
+- JIT 状态一致
+
+最小要求：
+- `JIT vs JIT`
+- `解释执行 vs 解释执行`
+- 相同 benchmark 命令
+- 相同 warmup / loops / affinity / 关键环境变量
 
 ## CinderX JIT 常用变量
 
