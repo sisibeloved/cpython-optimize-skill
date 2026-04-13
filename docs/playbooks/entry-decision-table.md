@@ -18,6 +18,7 @@
 | 新 Agent 进入远程环境 | 先创建独立宿主机目录 |
 | 已存在目录不确定是否被他人使用 | 不复用，重新建目录 |
 | 准备 bind mount 到容器 | 只挂当前 Agent 自己的目录 |
+| 需要同步代码仓 | 优先 `rsync` 到当前 Agent 目录 |
 
 ## Docker 调试终端怎么选
 
@@ -28,9 +29,24 @@
 | 批量脚本执行 | `docker exec` 或 compose 包装命令 |
 
 规则：
+- HIR dump 优先复用真实测试命令，只叠加 debug 环境变量
 - 调试主流程不要反复新开 `docker exec`
 - 先保持一个容器内 shell，再在里面持续推进
 - 在进入容器前，先确认宿主机目录已经隔离
+
+## 性能口径怎么选
+
+| 当前目标 | 口径 |
+|---|---|
+| 看 stock baseline | `CPython 解释执行` |
+| 看 stock JIT 收益 | `CPython JIT` |
+| 看 CinderX 运行时但不启 JIT | `CinderX 解释执行` |
+| 看 CinderX 最终加速 | `CinderX JIT` |
+
+规则：
+- 正式对比前先明确当前口径
+- 不要把 `CinderX 解释执行` 和 `CinderX JIT` 混成一类
+- 不要把 debug dump 环境变量混进正式性能口径
 
 ## Benchmark 入口怎么选
 

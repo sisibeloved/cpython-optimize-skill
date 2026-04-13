@@ -34,6 +34,10 @@ def main() -> int:
     require(scenarios, "场景 8", "pressure scenarios")
     require(scenarios, "场景 9", "pressure scenarios")
     require(scenarios, "场景 10", "pressure scenarios")
+    require(scenarios, "场景 11", "pressure scenarios")
+    require(scenarios, "场景 12", "pressure scenarios")
+    require(scenarios, "场景 13", "pressure scenarios")
+    require(scenarios, "场景 14", "pressure scenarios")
 
     for needle in [
         "run_benchmark.py",
@@ -41,6 +45,8 @@ def main() -> int:
         "worker",
         "bench_command",
         "sitecustomize",
+        "真实命令",
+        "性能口径",
     ]:
         require(pyperf, needle, "pyperformance workflow")
 
@@ -52,6 +58,7 @@ def main() -> int:
         "docker exec",
         "独立宿主机目录",
         "bind mount",
+        "PIP_INDEX_URL",
     ]:
         require(docker, needle, "docker workflow")
 
@@ -64,6 +71,8 @@ def main() -> int:
         "长连接交互 shell",
         "docker exec",
         "独立宿主机目录",
+        "rsync",
+        "性能口径",
     ]:
         require(decision, needle, "entry decision table")
 
@@ -75,6 +84,9 @@ def main() -> int:
         "docker exec",
         "裸机",
         "项目隔离性",
+        "rsync",
+        "真实命令",
+        "性能口径",
     ]:
         require(faq, needle, "faq")
 
@@ -102,6 +114,9 @@ def main() -> int:
         "LIR",
         "uop",
         "机器码",
+        "热点归因",
+        "优化点输出格式",
+        "修改方案",
     ]:
         require(case, needle, "case analysis workflow")
 

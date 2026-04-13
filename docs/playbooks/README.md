@@ -6,6 +6,7 @@
 - `pyperformance` crash triage
 - 入口决策表
 - FAQ
+- 性能口径定义
 - JIT log 判读
 - HIR 回归定位
 - Docker 环境初始化踩坑

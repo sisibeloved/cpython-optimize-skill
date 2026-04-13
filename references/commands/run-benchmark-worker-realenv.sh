@@ -3,6 +3,7 @@
 # 说明：
 # - 这是 CinderX/ARM 真实环境中用于单 benchmark worker 复现与定位的参考命令
 # - 重点是 worker 参数、JIT 日志和 HIR dump
+# - 这类命令本身就应作为 HIR 分析入口，不要再额外发明一条“简化分析命令”
 
 PYTHONJITENABLEJITLISTWILDCARDS=1 \
 PYTHONJITLISTFILE=/home/jit_list.txt \

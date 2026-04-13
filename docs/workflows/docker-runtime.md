@@ -63,7 +63,8 @@ Docker 工作流明确分成两条线：
 ## 实战注意事项
 
 - 代理不可默认写死，容器内要能自动摘除坏代理
-- `pip` 优先走国内源
+- 容器内 `pip` 默认应切到国内镜像源，优先阿里云或华为云
+- 不能只在宿主机配 `pip` 源，容器内构建和安装链路也要显式生效
 - openEuler / Python 源码下载最好走国内镜像
 - 初始化脚本要避免吞错误
 - 首次构建要警惕过宽的包通配符把 `debuginfo` / `debugsource` 一起拉进来
@@ -71,3 +72,15 @@ Docker 工作流明确分成两条线：
 - `pyperformance` 源码目录必须挂到真正可安装的仓库根，而不是空目录或错误层级
 - 只有自动化脚本、一次性检查或批量命令才优先 `docker exec`
 - 如果宿主机目录隔离做不好，Docker 本身也会失去实验隔离意义
+
+推荐默认值：
+
+```bash
+export PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+# 或
+export PIP_INDEX_URL=https://repo.huaweicloud.com/repository/pypi/simple
+```
+
+在容器脚本里应确保：
+- `python -m pip install ...` 能继承 `PIP_INDEX_URL`
+- 隔离构建环境也能继承 `PIP_INDEX_URL`

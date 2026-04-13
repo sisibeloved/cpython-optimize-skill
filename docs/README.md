@@ -14,4 +14,5 @@
 - `docs/playbooks/README.md`
 - `docs/playbooks/entry-decision-table.md`
 - `docs/playbooks/faq.md`
+- `docs/playbooks/performance-modes.md`
 - `docs/playbooks/pyperformance-crash-triage.md`

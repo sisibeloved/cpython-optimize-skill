@@ -18,6 +18,7 @@
 - 功能验证和 crash 复现：优先单个 `run_benchmark.py`
 - 全量 smoke 和官方口径：优先 `python -m pyperformance run`
 - 需要快速扫大量用例时，再用批量直跑脚本
+- dump HIR 时优先使用“真实命令 + debug 环境变量”的形式，不要先跑一条简化命令再单独分析另一份 HIR
 
 ## 真实命令参考
 
@@ -47,6 +48,38 @@
 - JIT benchmark 功能验证时必须先打开 HIR dump，确认真的进了 CinderX JIT
 - 跑性能数据时再关闭大部分 dump，避免日志和 dump 干扰
 - 在 ARM / Kunpeng 上，`PYTHONJITHUGEPAGES=0` 常常是必需护栏
+- 分析阶段和测试阶段应尽量共用同一条真实命令，只通过 debug 环境变量增减观测项
+
+## 性能口径
+
+正式讨论性能前，必须先明确当前是哪一种口径：
+
+1. `CPython 解释执行`
+2. `CPython JIT`
+3. `CinderX 解释执行`
+4. `CinderX JIT`
+
+最小区分原则：
+- `CPython 解释执行`：不启 CPython JIT，不启 CinderX JIT
+- `CPython JIT`：只启 CPython JIT
+- `CinderX 解释执行`：导入/安装 CinderX，但不显式启用 CinderX JIT
+- `CinderX JIT`：显式开启 CinderX JIT，并用 HIR / jit.log 证明 benchmark 本体已编译
+
+与 CinderX JIT 口径强相关的环境变量：
+- `PYTHONJITAUTO`
+- `PYTHONJITSPECIALIZEDOPCODES`
+- `PYTHONJITTYPEANNOTATIONGUARDS`
+- `PYTHONJITENABLEHIRINLINER`
+- `PYTHONJITHUGEPAGES`
+- `PYTHONJITLOGFILE`
+- `PYTHONJITDUMPFINALHIR`
+- `PYTHONJITDUMPSTATS`
+- `PYTHONPATH`
+- `LD_LIBRARY_PATH`
+
+注意：
+- `PYTHONJITLOGFILE` / `PYTHONJITDUMPFINALHIR` 这类变量属于调试观测变量，不应默认带入正式性能口径
+- `CinderX 解释执行` 与 `CinderX JIT` 的分界，必须靠是否显式启用 JIT 来确认，而不是只看是否安装了 `cinderx`
 
 ## 进程模型
 
@@ -73,3 +106,4 @@
 - 性能测试时再关掉大部分 dump，避免污染结果
 - `bench_command` 类 benchmark 需要特别关注子进程环境继承
 - 如果 `python -m pyperformance run` 行为异常，而单个 `run_benchmark.py` 正常，优先怀疑 worker/外部子进程模型差异
+- dump HIR 时优先用真实测试命令，只叠加 debug 环境变量；不要分裂成“测试命令”和“分析命令”两套口径
