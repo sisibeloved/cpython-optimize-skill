@@ -38,7 +38,7 @@ description: Use when在个人工作流中系统化执行 CPython/CinderX 优化
 
 ## 版本策略
 
-- `v0.2`：以 CinderX 优先的个人作战手册为当前稳定基线
+- `v0.3.0`：以 CinderX 优先的个人作战手册为当前稳定基线
 - 后续版本：在保持双线 Docker、真实命令模板和 pressure test 的前提下迭代
 - 允许强绑定：
   - Kunpeng / ARM

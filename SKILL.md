@@ -5,7 +5,7 @@ description: Use when开展 CPython/CinderX 性能优化、远程基准测试、
 
 # CPython/CinderX 优化技能
 
-这是一个面向个人工作流的 `v0.2` 技能仓库，当前版本以 **CinderX 优先** 的视角组织。
+这是一个面向个人工作流的 `v0.3.0` 技能仓库，当前版本以 **CinderX 优先** 的视角组织。
 
 本仓库采用两层结构：
 - 核心层：见 `core/SKILL.md`
@@ -19,6 +19,7 @@ description: Use when开展 CPython/CinderX 性能优化、远程基准测试、
    - Claude Code：`platforms/claude-code/SKILL.md`
    - OpenCode：`platforms/opencode/SKILL.md`
    - OpenClaw：`platforms/openclaw/SKILL.md`
+3. 版本变更见：`CHANGELOG.md`
 
 ## 当前版本范围
 
@@ -32,7 +33,7 @@ description: Use when开展 CPython/CinderX 性能优化、远程基准测试、
   - JIT：`HIR -> LIR -> 机器码`
   - 非 JIT：`字节码 -> uop -> 机器码`
 
-## v0.2 增量
+## v0.3.0 增量
 
 - 重构为“核心层 + 四平台薄包装”
 - 补齐 `pyperformance`、Docker、文档、用例分析工作流
@@ -42,6 +43,7 @@ description: Use when开展 CPython/CinderX 性能优化、远程基准测试、
   - `cinderx-test`
 - 迁入已验证的 `cinderx-test` 脚本
 - 增加 FAQ、入口决策表、静态/动态 pressure test
+- 补强远程 `rsync` 同步、容器内 `pip` 镜像源、性能口径定义和 HIR 分析顺序
 
 ## 原则
 
