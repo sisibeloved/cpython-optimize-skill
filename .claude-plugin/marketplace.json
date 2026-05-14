@@ -1,0 +1,33 @@
+{
+    "name": "cpython-optimize-skill",
+    "id": "cpython-optimize-skill",
+    "owner": {
+        "name": "luchen"
+    },
+    "metadata": {
+        "description": "CPython/CinderX 性能优化与设计文档技能仓库",
+        "version": "0.5.0"
+    },
+    "plugins": [
+        {
+            "name": "cpython-optimize-skill",
+            "source": "./",
+            "description": "CPython/CinderX 性能优化工作流与设计文档编写：编译、基准测试、JIT 分析、Docker 隔离、远程环境、架构/系统/功能/详细设计",
+            "version": "0.5.0",
+            "author": {
+                "name": "luchen"
+            },
+            "keywords": [
+                "cpython",
+                "cinderx",
+                "performance",
+                "benchmark",
+                "jit",
+                "docker",
+                "optimization",
+                "design-documentation"
+            ],
+            "category": "workflow"
+        }
+    ]
+}

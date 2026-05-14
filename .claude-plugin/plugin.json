@@ -1,7 +1,7 @@
 {
   "name": "cpython-optimize-skill",
-  "version": "0.4.0",
-  "description": "CPython/CinderX 性能优化技能仓库：编译、基准测试、JIT 分析、Docker 隔离、远程环境",
+  "version": "0.5.0",
+  "description": "CPython/CinderX 性能优化与设计文档技能仓库：编译、基准测试、JIT 分析、Docker 隔离、远程环境、设计文档",
   "author": {
     "name": "luchen"
   },

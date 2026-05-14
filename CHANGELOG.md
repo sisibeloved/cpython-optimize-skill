@@ -2,6 +2,17 @@
 
 本文件记录 `cpython-optimize-skill` 的版本演进。
 
+## v0.5.0
+
+新增设计文档编写技能：
+- 新增 `skills/design-documentation/` 子技能
+  - 架构设计、系统设计、功能设计、详细设计四类标准模板
+  - 自顶向下设计流程（架构 → 系统可选 → 功能 → 详细）
+  - 文档类型选择决策流程图
+  - 编写原则与格式约定
+  - 设计文档统一输出到 `docs/design/`
+- 更新引导技能 `using-cpython-optimize` 新增 `design-documentation` 条目
+
 ## v0.4.0
 
 重构为复合技能仓库：
