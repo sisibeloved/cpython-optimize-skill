@@ -2,6 +2,13 @@
 
 本文件记录 `cpython-optimize-skill` 的版本演进。
 
+## v0.5.1
+
+- 新增 `.claude-plugin/marketplace.json` 支持插件市场安装
+- 精简 README：移除性能口径、Docker 双线等子技能内容，改为入口技能承载
+- 修正 Claude Code 技能调用说明（无 `/skill` 斜杠命令）
+- README 添加 emoji 分节
+
 ## v0.5.0
 
 新增设计文档编写技能：
