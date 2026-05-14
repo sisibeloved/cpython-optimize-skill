@@ -8,6 +8,31 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SKILLS_DIR = ROOT / "skills"
+
+# 期望的顶层结构：目录/文件名 -> 类型（dir/file）
+TOP_LEVEL_LAYOUT = {
+    ".claude-plugin": "dir",
+    ".codex-plugin": "dir",
+    "hooks": "dir",
+    "skills": "dir",
+    "tests": "dir",
+    "package.json": "file",
+    "CHANGELOG.md": "file",
+    ".gitignore": "file",
+}
+
+# hooks/ 内结构
+HOOKS_LAYOUT = {
+    "hooks.json": "file",
+    "session-start": "file",
+}
+
+# plugin.json 内必须包含的 key
+PLUGIN_REQUIRED_KEYS = {"name", "version", "skills"}
+
+# SKILL.md frontmatter 必须包含的 key
+FRONTMATTER_REQUIRED_KEYS = {"name", "description"}
 
 
 def read_text(path: Path) -> str:
@@ -29,98 +54,62 @@ def parse_frontmatter(text: str) -> dict[str, str]:
     return fields
 
 
-def assert_non_empty_markdown(path: Path) -> None:
-    text = read_text(path).strip()
-    if len(text) < 20:
-        raise AssertionError(f"{path.relative_to(ROOT)} 内容过少")
+def validate_directory_layout(base: Path, layout: dict[str, str], context: str) -> None:
+    for name, expected_type in layout.items():
+        path = base / name
+        rel = path.relative_to(ROOT)
+        if expected_type == "dir" and not path.is_dir():
+            raise AssertionError(f"{context}缺少目录: {rel}")
+        if expected_type == "file" and not path.is_file():
+            raise AssertionError(f"{context}缺少文件: {rel}")
+
+
+def validate_plugin_json(path: Path) -> None:
+    import json
+    data = json.loads(read_text(path))
+    missing = PLUGIN_REQUIRED_KEYS - set(data.keys())
+    if missing:
+        raise AssertionError(f"{path.relative_to(ROOT)} 缺少字段: {missing}")
+
+
+def validate_skill_dir(path: Path) -> None:
+    skill_md = path / "SKILL.md"
+    if not skill_md.is_file():
+        raise AssertionError(f"缺少技能入口: {skill_md.relative_to(ROOT)}")
+
+    fields = parse_frontmatter(read_text(skill_md))
+    missing = FRONTMATTER_REQUIRED_KEYS - set(fields.keys())
+    if missing:
+        raise AssertionError(f"{skill_md.relative_to(ROOT)} 缺少 frontmatter 字段: {missing}")
+
+    # 子目录只能是 references、scripts、templates 中的若干个（或无）
+    allowed_subdirs = {"references", "scripts", "templates"}
+    for child in path.iterdir():
+        if child.is_dir() and child.name not in allowed_subdirs:
+            raise AssertionError(f"技能目录含非标准子目录: {child.relative_to(ROOT)}")
 
 
 def main() -> int:
-    skill_path = ROOT / "SKILL.md"
-    fields = parse_frontmatter(read_text(skill_path))
-    assert set(fields) == {"name", "description"}, (
-        "根 SKILL.md frontmatter 只能包含 name 和 description"
-    )
+    # 1. 顶层目录结构
+    validate_directory_layout(ROOT, TOP_LEVEL_LAYOUT, "")
 
-    expected_dirs = [
-        ROOT / "core",
-        ROOT / "platforms" / "codex",
-        ROOT / "platforms" / "claude-code",
-        ROOT / "platforms" / "opencode",
-        ROOT / "platforms" / "openclaw",
-        ROOT / "docs" / "workflows",
-        ROOT / "docs" / "playbooks",
-        ROOT / "references",
-    ]
-    for path in expected_dirs:
-        if not path.exists():
-            raise AssertionError(f"缺少目录: {path.relative_to(ROOT)}")
+    # 2. hooks 结构
+    validate_directory_layout(ROOT / "hooks", HOOKS_LAYOUT, "hooks/ ")
 
-    expected_files = [
-        ROOT / "core" / "SKILL.md",
-        ROOT / "platforms" / "codex" / "SKILL.md",
-        ROOT / "platforms" / "claude-code" / "SKILL.md",
-        ROOT / "platforms" / "opencode" / "SKILL.md",
-        ROOT / "platforms" / "openclaw" / "SKILL.md",
-        ROOT / "docs" / "workflows" / "ssh-connection.md",
-        ROOT / "docs" / "workflows" / "build-and-install.md",
-        ROOT / "docs" / "workflows" / "pyperformance-test.md",
-        ROOT / "docs" / "workflows" / "docker-runtime.md",
-        ROOT / "docs" / "workflows" / "documentation.md",
-        ROOT / "docs" / "workflows" / "case-analysis.md",
-        ROOT / "docs" / "playbooks" / "entry-decision-table.md",
-        ROOT / "docs" / "playbooks" / "faq.md",
-        ROOT / "references" / "commands" / "README.md",
-        ROOT / "references" / "commands" / "pyperformance-run-realenv.sh",
-        ROOT / "references" / "commands" / "run-benchmark-worker-realenv.sh",
-        ROOT / "references" / "templates" / "docker" / "README.md",
-        ROOT / "references" / "templates" / "docker" / "cpython-baseline" / "README.md",
-        ROOT / "references" / "templates" / "docker" / "cpython-baseline" / "docker-compose.yml",
-        ROOT / "references" / "templates" / "docker" / "cpython-baseline" / "Dockerfile",
-        ROOT / "references" / "templates" / "docker" / "cpython-baseline" / "project-readme.md",
-        ROOT / "references" / "templates" / "docker" / "cinderx-test" / "README.md",
-        ROOT / "references" / "templates" / "docker" / "cinderx-test" / "docker-compose.yml",
-        ROOT / "references" / "templates" / "docker" / "cinderx-test" / "project-readme.md",
-        ROOT / "scripts" / "README.md",
-        ROOT / "scripts" / "docker" / "cinderx-test" / "README.md",
-        ROOT / "scripts" / "docker" / "cinderx-test" / "benchmark_harness.py",
-        ROOT / "scripts" / "docker" / "cinderx-test" / "setup.sh",
-        ROOT / "scripts" / "docker" / "cinderx-test" / "test-benchmark.sh",
-        ROOT / "scripts" / "docker" / "cinderx-test" / "smoke.sh",
-        ROOT / "tests" / "pressure-scenarios.md",
-        ROOT / "tests" / "dynamic-pressure-review.md",
-        ROOT / "tests" / "validate_pressure_scenarios.py",
-    ]
-    for path in expected_files:
-        if not path.exists():
-            raise AssertionError(f"缺少文件: {path.relative_to(ROOT)}")
-        assert_non_empty_markdown(path)
+    # 3. plugin.json 字段
+    validate_plugin_json(ROOT / ".claude-plugin" / "plugin.json")
+    validate_plugin_json(ROOT / ".codex-plugin" / "plugin.json")
 
-    root_skill = read_text(skill_path)
-    if "core/SKILL.md" not in root_skill:
-        raise AssertionError("根 SKILL.md 应该明确指向核心层入口")
+    # 4. skills/ 下每个子目录都是合法技能
+    if not SKILLS_DIR.is_dir():
+        raise AssertionError("缺少 skills/ 目录")
 
-    pyperf_workflow = read_text(ROOT / "docs" / "workflows" / "pyperformance-test.md")
-    if "references/commands/pyperformance-run-realenv.sh" not in pyperf_workflow:
-        raise AssertionError("pyperformance 工作流应链接真实 run 命令模板")
-    if "references/commands/run-benchmark-worker-realenv.sh" not in pyperf_workflow:
-        raise AssertionError("pyperformance 工作流应链接真实 worker 命令模板")
+    skill_dirs = [p for p in SKILLS_DIR.iterdir() if p.is_dir()]
+    if not skill_dirs:
+        raise AssertionError("skills/ 下没有子技能")
 
-    docker_workflow = read_text(ROOT / "docs" / "workflows" / "docker-runtime.md")
-    for relpath in [
-        "scripts/docker/cinderx-test/setup.sh",
-        "scripts/docker/cinderx-test/test-benchmark.sh",
-        "scripts/docker/cinderx-test/smoke.sh",
-        "scripts/docker/cinderx-test/benchmark_harness.py",
-        "references/templates/docker/cpython-baseline/",
-        "references/templates/docker/cinderx-test/",
-    ]:
-        if relpath not in docker_workflow:
-            raise AssertionError(f"docker 工作流应链接 {relpath}")
-
-    core_skill = read_text(ROOT / "core" / "SKILL.md")
-    if "docs/playbooks/entry-decision-table.md" not in core_skill:
-        raise AssertionError("core skill 应链接入口决策表")
+    for skill_dir in skill_dirs:
+        validate_skill_dir(skill_dir)
 
     print("layout validation passed")
     return 0

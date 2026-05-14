@@ -2,6 +2,24 @@
 
 本文件记录 `cpython-optimize-skill` 的版本演进。
 
+## v0.4.0
+
+重构为复合技能仓库：
+- 新增 `.claude-plugin/plugin.json`、`.codex-plugin/plugin.json`、`package.json` 插件注册
+- 新增 `hooks/` SessionStart 自动注入引导技能
+- 新增 `skills/using-cpython-optimize/` 引导技能（含决策流程图和 FAQ）
+- 将 6 个工作流迁移为自包含子技能：
+  - `skills/remote-environment/` — SSH、tmux、rsync
+  - `skills/cpython-build/` — 编译与安装
+  - `skills/docker-runtime/` — Docker 容器隔离（含模板和脚本）
+  - `skills/pyperformance-test/` — 基准测试（含命令模板、脚本、crash triage）
+  - `skills/cinderx-analysis/` — JIT/非JIT 用例分析（含性能口径定义）
+  - `skills/experiment-documentation/` — 文档规范（含产物 schema）
+- 每个 子技能自包含 SKILL.md + 专属 references/scripts/templates
+- playbook 内容按主题吸收到对应子技能
+- 移除旧目录：`docs/workflows/`、`docs/playbooks/`、`references/`、`scripts/`
+- `docs/` 重新定位为仓库级文档（plans、开发文档）
+
 ## v0.3.0
 
 - 明确远程环境工作流：

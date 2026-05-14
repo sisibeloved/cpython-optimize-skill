@@ -1,0 +1,36 @@
+{
+  "name": "cpython-optimize-skill",
+  "version": "0.4.0",
+  "description": "CPython/CinderX 性能优化技能仓库：编译、基准测试、JIT 分析、Docker 隔离、远程环境",
+  "author": {
+    "name": "luchen"
+  },
+  "license": "MIT",
+  "keywords": [
+    "cpython",
+    "cinderx",
+    "performance",
+    "benchmark",
+    "pyperformance",
+    "jit",
+    "docker",
+    "optimization"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "CPython Optimize",
+    "shortDescription": "CPython/CinderX 性能优化工作流：编译、测试、分析、隔离",
+    "longDescription": "系统化执行 CPython/CinderX 性能优化任务的技能集合。覆盖远程环境搭建、编译安装、pyperformance 基准测试、JIT/非JIT 用例分析、Docker 运行时隔离和实验文档沉淀。",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "帮我搭建 CPython 优化环境",
+      "跑一次 pyperformance benchmark",
+      "分析这个 JIT 用例的性能"
+    ]
+  }
+}

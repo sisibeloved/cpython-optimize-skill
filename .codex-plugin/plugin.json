@@ -1,0 +1,20 @@
+{
+  "name": "cpython-optimize-skill",
+  "version": "0.4.0",
+  "description": "CPython/CinderX 性能优化技能仓库：编译、基准测试、JIT 分析、Docker 隔离、远程环境",
+  "author": {
+    "name": "luchen"
+  },
+  "license": "MIT",
+  "keywords": [
+    "cpython",
+    "cinderx",
+    "performance",
+    "benchmark",
+    "pyperformance",
+    "jit",
+    "docker",
+    "optimization"
+  ],
+  "skills": "./skills/"
+}
