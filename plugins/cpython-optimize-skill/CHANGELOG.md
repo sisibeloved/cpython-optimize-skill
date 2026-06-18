@@ -6,6 +6,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- 新增 `cinderx-jit-review` skill，用于 CinderX JIT PR correctness-first review，覆盖 may-raise、helper fallback、deopt/FrameState、refcount、adaptive opcode、AArch64 codegen、RuntimeTests/test_cinderx/test_kunpeng 证据和 exact comment placement。
+- 新增 `cinderx-parallel-pyperformance` skill，将 NUMA/L3-aware 并行 pyperformance 验证沉淀为 8/16 lane 自适应调度、blue-server-53 稳定 profile、CinderX manager/worker venv 注入、SSH 代理和稳定性复跑流程。
+
 ## [0.9.0] - 2026-06-16
 
 ### Added

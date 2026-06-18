@@ -31,6 +31,8 @@ REQUIRED_SKILLS = {
     "cinderx-interpreter-case-analyze",
     "cinderx-isa-microarch-compare",
     "cinderx-optimization-report",
+    "cinderx-jit-review",
+    "cinderx-parallel-pyperformance",
     "validation-strategy",
     "design-documentation",
     "workflow-remote-cinderx-lab-setup",

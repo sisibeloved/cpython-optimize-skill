@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](plugins/cpython-optimize-skill/CHANGELOG.md)
 [![Codex](https://img.shields.io/badge/Codex-plugin-0A7EA4.svg)](#codex-cli)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757.svg)](#claude-code插件市场)
-[![Skills](https://img.shields.io/badge/skills-27-success.svg)](#-技能一览)
+[![Skills](https://img.shields.io/badge/skills-29-success.svg)](#-技能一览)
 [![Agents](https://img.shields.io/badge/agents-8-informational.svg)](#-agent-一览)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -62,10 +62,12 @@ Workflow 是多个技能和专门 Agent 的编排入口；原子技能继续负�
 | ⚡ `cinderx-fast-validation` | 用 ccache wrapper 加速 CinderX setup_release、release wheel 和 gate 重复验证 | scripts/ |
 | 📊 `pyperformance-worker-run` | 单 benchmark worker、bench_command、sitecustomize | references/、scripts/ |
 | 📈 `pyperformance-suite-run` | 正式 `python -m pyperformance run` | — |
+| ⚡ `cinderx-parallel-pyperformance` | NUMA/L3-aware 8/16 lane 并行 pyperformance、worker venv 注入和稳定性复跑 | references/、scripts/ |
 | 📉 `pyperformance-result-compare` | run.json、speedup.json、收益/回归/噪声判断 | — |
 | 🧯 `cinderx-gdb-core-triage` | SIGSEGV、exit 139、core、gdb 证据链 | references/ |
 | 🧾 `cinderx-hir-dump` | 真实 worker 命令叠加 HIR / jit.log | — |
 | 🔬 `cinderx-jit-entry-check` | 确认 benchmark 本体进入 CinderX JIT | — |
+| 🧑‍⚖️ `cinderx-jit-review` | CinderX JIT PR correctness-first review、RuntimeTests/test_cinderx/test_kunpeng 覆盖和 exact comment placement | references/ |
 | 🔬 `cinderx-hir-lir-analyze` | HIR/LIR/uop/机器码和修改方案 | references/ |
 | 🧩 `cinderx-interpreter-case-analyze` | 非 JIT / 解释执行用例的阶段表、函数形状和 gate 策略 | — |
 | 🧭 `cinderx-isa-microarch-compare` | Kunpeng/x86 ISA、微架构、perf 差异矩阵 | — |
@@ -117,6 +119,8 @@ codex plugin add cpython-optimize-skill@cpython-optimize-skill
 > 帮我在 Kunpeng 上编译 CinderX 并跑一次 pyperformance
 > regex_compile 在容器里 SIGSEGV 了，帮我复现和定位
 > 对比 stock CPython JIT 和 CinderX JIT 的 pyperformance 数据
+> 在 53 上用 8 核自适应并行跑 pyperformance dry-run，再做两次稳定性复跑
+> 帮我 review 这个 CinderX JIT PR 的 correctness 风险，并给出 exact comment placement
 > Kunpeng 和 x86 上同一个 benchmark 差距很大，帮我找根因
 > 帮我写一份 CinderX JIT 优化点的架构设计说明书
 ```
@@ -153,10 +157,12 @@ Agent 会根据任务自动选择对应技能，无需手动加载。
 │   │   ├── cinderx-fast-validation/
 │   │   ├── pyperformance-worker-run/
 │   │   ├── pyperformance-suite-run/
+│   │   ├── cinderx-parallel-pyperformance/
 │   │   ├── pyperformance-result-compare/
 │   │   ├── cinderx-gdb-core-triage/
 │   │   ├── cinderx-hir-dump/
 │   │   ├── cinderx-jit-entry-check/
+│   │   ├── cinderx-jit-review/
 │   │   ├── cinderx-hir-lir-analyze/
 │   │   ├── cinderx-interpreter-case-analyze/
 │   │   ├── cinderx-isa-microarch-compare/
