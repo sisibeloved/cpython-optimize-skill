@@ -1,90 +1,90 @@
-# JIT Correctness Validation Strategy
+# JIT 正确性验证策略
 
-Source pages:
+来源页面：
 
 - https://github.com/Cookie4Cat/cinderx/wiki/JIT-Correctness-Validation-Strategy
 - https://github.com/Cookie4Cat/cinderx/wiki/JIT-Optimization-Correctness-Contract
 
-## Baseline
+## 基线
 
-Use this strategy for CinderX JIT correctness review under:
+在以下基线下审查 CinderX JIT 正确性时使用本策略：
 
 - ARM / AArch64
-- CPython 3.14.3 GIL build
+- CPython 3.14.3 GIL 构建
 - cinderx
 
-Pages or PR notes that mention later CPython versions should be treated as experiment history unless they explicitly update the baseline.
+如果页面或 PR 说明提到更高版本的 CPython，除非它们明确更新了本基线，否则只把这些信息视作实验历史。
 
 ## 局部正确性与系统正确性
 
-Separate the review into two claims:
+把 review 拆成两个判断：
 
-- Local correctness: the changed builder, preload, HIR, LIR, codegen, helper, deopt, or refcount rule preserves the semantics it owns.
-- System correctness: the composed program still matches Python behavior under JIT on/off and gate coverage.
+- 局部正确性：被修改的 builder、preload、HIR、LIR、codegen、helper、deopt 或 refcount 规则，是否保持了它所属层级应负责的语义。
+- 系统正确性：组合后的程序在 JIT on/off 和 gate 覆盖下，是否仍然符合 Python 行为。
 
-This skill focuses on local correctness first. Gate results are supporting evidence, not a substitute for layer-local proof.
+本 skill 优先关注局部正确性。Gate 结果是辅助证据，不能替代对应层级的本地证明。
 
-## Stage map
+## 阶段映射
 
-| Stage | Review focus | Typical evidence |
+| 阶段 | Review 重点 | 典型证据 |
 |-------|--------------|------------------|
-| Stage 1 - Bytecode builder / preload | Opcode interpretation, CPython 3.14 adaptive state, inline cache intake, Python semantic preconditions | RuntimeTests that trigger the intended opcode/cache state; builder/preload shape checks; generic fallback checks |
-| Stage 2 - HIR | Lowering, guards, helper calls, ownership shape, verifier assumptions | HIR text fixtures, opcode count, guard/fallback negative cases, SSA/verifier evidence |
-| Stage 3 - LIR / regalloc | Operand lowering, register constraints, live ranges, materialization | LIR/uop evidence, spill/live range cases, architecture-sensitive negative cases |
-| Stage 4 - Codegen / runtime helpers | AArch64 instruction semantics, helper ABI, flags, width, runtime call side effects | RuntimeTests for code shape/helper semantics, AArch64 backend assertions, helper exception/side-effect tests |
-| Stage 5 - Deopt / FrameState / refs | Frame reconstruction, live refs, owned/borrowed state, exception/deopt edge | RuntimeTests for deopt path, FrameState contents, refcount-sensitive cases |
-| Stage 6 - End-to-end Python semantics | JIT on/off equivalence and system behavior | `test_cinderx`, targeted stdlib tests, pyperformance only as supplemental behavior/perf evidence |
+| Stage 1 - Bytecode builder / preload | Opcode 解释、CPython 3.14 adaptive 状态、inline cache 读取、Python 语义前提 | 触发目标 opcode/cache 状态的 RuntimeTests；builder/preload 形态检查；generic fallback 检查 |
+| Stage 2 - HIR | Lowering、guard、helper call、ownership 形态、verifier 假设 | HIR text fixtures、opcode count、guard/fallback 负例、SSA/verifier 证据 |
+| Stage 3 - LIR / regalloc | Operand lowering、寄存器约束、live range、materialization | LIR/uop 证据、spill/live range 用例、架构敏感负例 |
+| Stage 4 - Codegen / runtime helpers | AArch64 指令语义、helper ABI、flags、宽度、runtime call 副作用 | 覆盖 code shape/helper 语义的 RuntimeTests、AArch64 backend 断言、helper 异常/副作用测试 |
+| Stage 5 - Deopt / FrameState / refs | Frame 重建、live refs、owned/borrowed 状态、exception/deopt edge | 覆盖 deopt path、FrameState 内容、refcount 敏感场景的 RuntimeTests |
+| Stage 6 - End-to-end Python semantics | JIT on/off 等价性和系统行为 | `test_cinderx`、定向 stdlib 测试；pyperformance 只能作为行为/性能辅助证据 |
 
-## Six questions for every JIT change
+## 每个 JIT 改动都要回答的六个问题
 
-For each changed rule, require answers to:
+对每条被修改的规则，都要能回答：
 
-1. Which layer owns the change?
-2. What Python or JIT-layer semantics must this layer preserve?
-3. What assumptions does the fast path make?
-4. What invariants can be broken if the assumptions are false?
-5. Which machine checks prove the invariants?
-6. Which positive, negative, and end-to-end tests prove the behavior?
+1. 这个改动由哪个层级负责？
+2. 这个层级必须保持哪些 Python 语义或 JIT 层级语义？
+3. Fast path 依赖哪些假设？
+4. 如果这些假设不成立，哪些 invariant 可能被破坏？
+5. 哪些机器检查证明这些 invariant 成立？
+6. 哪些正例、负例和端到端测试证明行为正确？
 
-If these cannot be answered, the PR is not yet in a reviewable correctness shape.
+如果这些问题无法回答，这个 PR 的正确性形态还不足以进入 review 通过状态。
 
-## PR-level correctness contract
+## PR 级正确性契约
 
-Ask for or reconstruct this contract while reviewing:
+Review 时要求 PR 提供，或由 reviewer 重建这份契约：
 
 ```text
-Optimization:
-Affected stages:
-Python semantic source:
-Fast-path assumptions:
-Guards / checks that protect those assumptions:
-Guard failure behavior:
-May-raise points:
-Exception-table / protected-region behavior:
-Side effects / memory dependencies:
-FrameState / deopt requirements:
-Refcount considerations:
-Version-specific differences:
-Required tests:
-Known non-goals:
+优化内容：
+影响阶段：
+Python 语义来源：
+Fast-path 假设：
+保护这些假设的 guards / checks：
+Guard 失败行为：
+May-raise 点：
+Exception-table / protected-region 行为：
+副作用 / 内存依赖：
+FrameState / deopt 要求：
+Refcount 考量：
+版本特定差异：
+必要测试：
+已知非目标：
 ```
 
-Missing contract fields are not automatically findings. They become findings when the diff relies on that field to be safe and the PR does not provide code or test evidence.
+契约字段缺失不自动构成 finding。只有当 diff 的安全性依赖某个字段，而 PR 没有提供代码或测试证据时，才把它作为 finding。
 
-## May-raise and exception table rule
+## May-raise 与 exception table 规则
 
-If a lowering adds, removes, moves, replaces, or merges a `may-raise` point, review more than exception type equivalence.
+如果某个 lowering 新增、删除、移动、替换或合并了 `may-raise` 点，review 不能只检查异常类型等价。
 
-Check:
+检查：
 
-- Is the original bytecode offset inside a `co_exceptiontable` protected range?
-- Should the original exception be caught by a handler in the same Python frame?
-- Does the new fast path, helper, guard miss, or fallback preserve the original same-frame exception edge?
-- If that cannot be proven, does the optimized path disable itself or return to generic lowering inside the protected region?
+- 原始 bytecode offset 是否位于 `co_exceptiontable` 的 protected range 内？
+- 原始异常是否应被同一个 Python frame 内的 handler 捕获？
+- 新 fast path、helper、guard miss 或 fallback 是否保持了原始 same-frame exception edge？
+- 如果无法证明这一点，优化路径是否会在 protected region 内禁用自己，或回到 generic lowering？
 
-Core rule: a helper fallback that raises the right exception type can still be wrong if the exception bypasses the handler that would have caught the original bytecode operation.
+核心规则：即使 helper fallback 抛出了正确的异常类型，只要异常绕过了原本应捕获该 bytecode 操作异常的 handler，它仍然是错的。
 
-Minimal example shape:
+最小示例形态：
 
 ```python
 def caught_flip(perm, k):
@@ -95,69 +95,69 @@ def caught_flip(perm, k):
     return perm
 ```
 
-If JIT folding replaces the slice operation with a helper, tests must prove the helper-raised exception is still caught by the same-frame `except`, and that the intended fast path actually ran.
+如果 JIT folding 把 slice 操作替换成 helper，测试必须证明 helper 抛出的异常仍会被同一 frame 的 `except` 捕获，并且预期 fast path 确实运行过。
 
-## RuntimeTests hard requirement
+## RuntimeTests 硬要求
 
-Any JIT optimization PR that touches bytecode builder, preload, HIR, LIR, codegen, runtime helper, deopt/FrameState, refcount-sensitive behavior, or CPython adaptive/specialized opcode consumption normally needs new or updated `RuntimeTests`.
+任何触及 bytecode builder、preload、HIR、LIR、codegen、runtime helper、deopt/FrameState、refcount 敏感行为，或消费 CPython adaptive/specialized opcode 的 JIT 优化 PR，通常都需要新增或更新 `RuntimeTests`。
 
-`test_cinderx`, stdlib tests, pyperformance, and microbenchmarks are supplemental. They do not replace local machine checks for the JIT layer being changed.
+`test_cinderx`、stdlib tests、pyperformance 和 microbenchmarks 都是辅助证据。它们不能替代被修改 JIT 层级的本地机器检查。
 
-Minimum RuntimeTests evidence:
+最低 RuntimeTests 证据：
 
-- Fast path positive case proves the target opcode, HIR shape, LIR shape, helper call, or codegen shape appears.
-- Guard miss / fallback negative case proves invalid assumptions do not use the fast path.
-- Adaptive/specialized opcode tests first trigger the target opcode state, then verify JIT consumption.
-- Deopt, FrameState, borrowed/owned refs, may-raise helpers, and side-effect order changes have direct assertions.
+- Fast path 正例要证明目标 opcode、HIR shape、LIR shape、helper call 或 codegen shape 出现。
+- Guard miss / fallback 负例要证明无效假设不会使用 fast path。
+- Adaptive/specialized opcode 测试要先触发目标 opcode 状态，再验证 JIT 消费了该状态。
+- Deopt、FrameState、borrowed/owned refs、may-raise helpers 和 side-effect order 改动要有直接断言。
 
-Valid exceptions:
+可接受的例外：
 
-- Pure docs.
-- Comments only.
-- Test-tool-only changes.
-- Refactors that do not change JIT behavior.
+- 纯文档。
+- 仅注释。
+- 仅测试工具改动。
+- 不改变 JIT 行为的重构。
 
-The exception should be explicit in the PR description.
+例外理由应在 PR 说明里显式写清楚。
 
-## Evidence levels
+## 证据等级
 
-P0 evidence:
+P0 证据：
 
-- JIT on/off return value equivalence.
-- Exception type and timing equivalence.
-- Fast path positive evidence.
-- Guard miss / fallback negative evidence.
-- Target function really entered CinderX JIT.
-- If adaptive/specialized opcodes are involved, proof that the target opcode was triggered.
+- JIT on/off 返回值等价。
+- 异常类型和异常时机等价。
+- Fast path 正例证据。
+- Guard miss / fallback 负例证据。
+- 目标函数确实进入 CinderX JIT。
+- 如果涉及 adaptive/specialized opcode，要证明目标 opcode 已被触发。
 
-P1 evidence:
+P1 证据：
 
-- HIR shape or opcode count evidence.
-- Deopt / FrameState coverage.
-- May-raise helper exception propagation coverage.
-- Same-frame protected-region test for helper/fallback exceptions.
-- Refcount-sensitive coverage when ownership, helper exception edges, or deopt live refs are touched.
-- Specialized opcode enabled/disabled equivalence.
+- HIR shape 或 opcode count 证据。
+- Deopt / FrameState 覆盖。
+- May-raise helper 异常传播覆盖。
+- 针对 helper/fallback 异常的 same-frame protected-region 测试。
+- 当 ownership、helper exception edge 或 deopt live refs 被触及时，要有 refcount 敏感覆盖。
+- Specialized opcode enabled/disabled 等价性。
 
-P2 evidence:
+P2 证据：
 
-- Randomized, property, metamorphic, or stress inputs for new or widened fast paths.
-- Monitoring / instrumentation interaction when relevant.
+- 针对新增或扩宽 fast path 的随机、property、metamorphic 或 stress 输入。
+- 相关时覆盖 monitoring / instrumentation 交互。
 
-## Existing facilities
+## 现有设施
 
-Prefer existing repository mechanisms before inventing new checks:
+优先使用仓库已有机制，不要先发明新的检查方式：
 
 - HIR text fixtures: `cinderx/RuntimeTests/hir_tests`
 - HIR expected update script: `cinderx/TestScripts/update_hir_expected.py`
 - HIR SSA verifier: `cinderx/Jit/hir/ssa.cpp`
 - HIR stats: `cinderx/Jit/hir/hir_stats.cpp`
 
-## Review closeout rule
+## Review 收口规则
 
-A review can say "no blocker" only after checking:
+只有检查完以下内容后，review 才能说 “no blocker”：
 
-- The changed layer has local correctness evidence.
-- The risky fast path has positive and negative tests.
-- RuntimeTests coverage is present or explicitly unnecessary.
-- Any system-level tests are described as supplemental rather than substituting local proof.
+- 被修改层级有局部正确性证据。
+- 有风险的 fast path 有正例和负例测试。
+- RuntimeTests 覆盖存在，或明确说明不需要。
+- 任何系统级测试都被描述为辅助证据，而不是替代局部证明。
