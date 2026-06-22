@@ -42,6 +42,8 @@ REQUIRED_SKILLS = {
     "workflow-cross-platform-delta-triage",
     "workflow-feature-driven-optimization",
     "workflow-platform-differential-discovery",
+    "workflow-platform-differential-discovery-deepdive",
+    "cinderx-evidence-table",
 }
 
 REMOVED_SKILLS = {
@@ -72,6 +74,7 @@ REQUIRED_AGENTS = {
     "cinderx-crash-triager.md",
     "cinderx-jit-analyst.md",
     "cinderx-platform-analyst.md",
+    "cinderx-evidence-analyst.md",
 }
 
 # 期望的顶层结构：目录/文件名 -> 类型（dir/file）
