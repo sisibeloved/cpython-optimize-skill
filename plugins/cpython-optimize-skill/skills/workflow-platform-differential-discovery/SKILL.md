@@ -17,4 +17,15 @@ description: Use when 需要系统分析 CPython/CinderX 代码、Kunpeng/x86 IS
 
 ## Gate
 
-先建立 ISA、微架构、perf、benchmark 覆盖矩阵，再进入具体 HIR/LIR。不要默认跑三小时全量。
+先建立 ISA、微架构、perf、benchmark 覆盖矩阵，再进入具体 HIR/LIR。
+
+## 输出契约
+
+产物是候选用例清单，供深钻 `workflow-platform-differential-discovery-deepdive` 的阶段 0 选例使用（推荐输入，非强制）。每个候选至少带：
+
+- 用例名
+- 双平台 wall clock 差距
+- 热度信号
+- 为何值得深钻（一句话）
+
+清单回答"先钻哪个用例"，不回答"这个用例怎么优化"——后者交给深钻 workflow 的证据表。不要默认跑三小时全量。
