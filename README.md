@@ -1,10 +1,10 @@
 # 🔧 CPython/CinderX 性能优化技能仓库
 
-[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](plugins/cpython-optimize-skill/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](plugins/cpython-optimize-skill/CHANGELOG.md)
 [![Codex](https://img.shields.io/badge/Codex-plugin-0A7EA4.svg)](#codex-cli)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757.svg)](#claude-code插件市场)
-[![Skills](https://img.shields.io/badge/skills-29-success.svg)](#-技能一览)
-[![Agents](https://img.shields.io/badge/agents-8-informational.svg)](#-agent-一览)
+[![Skills](https://img.shields.io/badge/skills-32-success.svg)](#-技能一览)
+[![Agents](https://img.shields.io/badge/agents-9-informational.svg)](#-agent-一览)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 面向个人工作流的 CPython/CinderX 性能优化与设计文档技能集合，以 Claude Code / Codex 插件形式交付。
@@ -21,7 +21,8 @@
 |----------|------|
 | `workflow-cross-platform-delta-triage` | 双平台性能差距根因定位和收益验证 |
 | `workflow-feature-driven-optimization` | 已知特性驱动的代码优化、功能用例和性能验证 |
-| `workflow-platform-differential-discovery` | 系统分析 ISA / 微架构差异并发现优化点 |
+| `workflow-platform-differential-discovery` | 系统分析 ISA / 微架构差异并发现优化点（matrix-first 粗筛，产出候选用例清单） |
+| `workflow-platform-differential-discovery-deepdive` | 按单个用例深钻，从性能数据追到 ISA / 微架构 / 硬件根因，产出可信备选优化项 |
 
 ### Supporting Workflow
 
@@ -46,6 +47,7 @@ Workflow 是多个技能和专门 Agent 的编排入口；原子技能继续负�
 | `cinderx-crash-triager` | 接管 native crash 取证 |
 | `cinderx-jit-analyst` | 接管 JIT/HIR/LIR 优化分析 |
 | `cinderx-platform-analyst` | 接管 ISA / 微架构差异分析 |
+| `cinderx-evidence-analyst` | 接管单用例证据表，跨层根因下钻（HIR/LIR→机器码→ISA→微架构→硬件）与穿刺判读 |
 
 ## 📦 技能一览
 
@@ -71,6 +73,7 @@ Workflow 是多个技能和专门 Agent 的编排入口；原子技能继续负�
 | 🔬 `cinderx-hir-lir-analyze` | HIR/LIR/uop/机器码和修改方案 | references/ |
 | 🧩 `cinderx-interpreter-case-analyze` | 非 JIT / 解释执行用例的阶段表、函数形状和 gate 策略 | — |
 | 🧭 `cinderx-isa-microarch-compare` | Kunpeng/x86 ISA、微架构、perf 差异矩阵 | — |
+| 🧾 `cinderx-evidence-table` | 单用例深钻证据表 E1–E9 三段式结构（What/Verdict/Gate）、根因层级工具证据和 SPE/IBS 采样探测原则 | — |
 | 📝 `cinderx-optimization-report` | CinderX 优化报告和证据链沉淀 | references/ |
 | ✅ `validation-strategy` | 验证阶梯、成本预算、缓存复用 | — |
 | 📐 `design-documentation` | 架构/系统/功能/详细设计文档 | references/ |
@@ -121,7 +124,8 @@ codex plugin add cpython-optimize-skill@cpython-optimize-skill
 > 对比 stock CPython JIT 和 CinderX JIT 的 pyperformance 数据
 > 在 53 上用 8 核自适应并行跑 pyperformance dry-run，再做两次稳定性复跑
 > 帮我 review 这个 CinderX JIT PR 的 correctness 风险，并给出 exact comment placement
-> Kunpeng 和 x86 上同一个 benchmark 差距很大，帮我找根因
+> Kunpeng 和 x86 上哪些 benchmark 差距最大，帮我系统筛一遍候选用例
+> 深钻 regex_compile 这一个用例，从性能数据追到 ISA/微架构根因，给我一份能落地的优化点证据表
 > 帮我写一份 CinderX JIT 优化点的架构设计说明书
 ```
 
@@ -148,6 +152,7 @@ Agent 会根据任务自动选择对应技能，无需手动加载。
 │   ├── skills/                              # 原子技能 + workflow 技能
 │   │   ├── using-cpython-optimize/
 │   │   ├── cinderx-env-validate/
+│   │   ├── cinderx-evidence-table/
 │   │   ├── cinderx-env-clean/
 │   │   ├── cinderx-env-bootstrap/
 │   │   ├── cinderx-remote-lab-ops/
@@ -175,7 +180,8 @@ Agent 会根据任务自动选择对应技能，无需手动加载。
 │   │   ├── workflow-jit-optimization-analysis/
 │   │   ├── workflow-cross-platform-delta-triage/
 │   │   ├── workflow-feature-driven-optimization/
-│   │   └── workflow-platform-differential-discovery/
+│   │   ├── workflow-platform-differential-discovery/
+│   │   └── workflow-platform-differential-discovery-deepdive/
 │   ├── agents/                              # workflow 可引用的专门 Agent 角色文档
 │   ├── tests/
 │   ├── docs/
