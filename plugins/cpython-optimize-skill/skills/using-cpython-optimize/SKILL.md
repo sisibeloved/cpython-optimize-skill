@@ -30,6 +30,7 @@ Agent 文档不是原生 Skill 自动触发单元。主 Agent 或 hook 一旦决
 | `cinderx-crash-triager` / crash-triager | `SIGSEGV`、`exit 139`、core dump |
 | `cinderx-jit-analyst` | CinderX JIT、HIR/LIR、解释执行用例、机器码优化点 |
 | `cinderx-platform-analyst` | Kunpeng/x86、ISA、微架构差异 |
+| `cinderx-evidence-analyst` | 单用例证据表、跨层根因下钻、穿刺判读 |
 
 ## 反问 Gate
 
@@ -57,13 +58,14 @@ Agent 文档不是原生 Skill 自动触发单元。主 Agent 或 hook 一旦决
 
 ## 专业 Skill
 
-`cinderx-env-validate`、`cinderx-env-clean`、`cinderx-env-bootstrap`、`cinderx-remote-lab-ops`、`cinderx-ab-run-slot`、`cpython-runtime-test-run`、`cinderx-smoke-check`、`pyperformance-worker-run`、`pyperformance-suite-run`、`pyperformance-result-compare`、`cinderx-gdb-core-triage`、`cinderx-hir-dump`、`cinderx-jit-entry-check`、`cinderx-hir-lir-analyze`、`cinderx-interpreter-case-analyze`、`cinderx-isa-microarch-compare`、`cinderx-optimization-report`、`validation-strategy`。
+`cinderx-env-validate`、`cinderx-env-clean`、`cinderx-env-bootstrap`、`cinderx-remote-lab-ops`、`cinderx-ab-run-slot`、`cpython-runtime-test-run`、`cinderx-smoke-check`、`pyperformance-worker-run`、`pyperformance-suite-run`、`pyperformance-result-compare`、`cinderx-gdb-core-triage`、`cinderx-hir-dump`、`cinderx-jit-entry-check`、`cinderx-hir-lir-analyze`、`cinderx-interpreter-case-analyze`、`cinderx-isa-microarch-compare`、`cinderx-evidence-table`、`cinderx-optimization-report`、`validation-strategy`。
 
 ## Workflow 路由
 
 - 双平台性能差距：`workflow-cross-platform-delta-triage`
 - 已知特性优化：`workflow-feature-driven-optimization`
 - 系统找平台优化点：`workflow-platform-differential-discovery`
+- 深钻单用例拿可信优化点：`workflow-platform-differential-discovery-deepdive`
 - 环境准备：`workflow-remote-cinderx-lab-setup`
 - crash：`workflow-cinderx-crash-triage`
 - 正式回归：`workflow-pyperformance-regression`
