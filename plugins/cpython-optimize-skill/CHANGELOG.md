@@ -4,12 +4,23 @@
 
 格式基于 [Keep a Changelog 1.1.0](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)。
 
-## [Unreleased]
+## [1.0.0] - 2026-06-21
+
+首个正式大版本。Agent / Workflow / Skill 三层架构与跨平台差异分析能力完整成形，证据驱动深钻流程沉淀为可复用资产。
 
 ### Added
 
 - 新增 `cinderx-jit-review` skill，用于 CinderX JIT PR correctness-first review，覆盖 may-raise、helper fallback、deopt/FrameState、refcount、adaptive opcode、AArch64 codegen、RuntimeTests/test_cinderx/test_kunpeng 证据和 exact comment placement。
 - 新增 `cinderx-parallel-pyperformance` skill，将 NUMA/L3-aware 并行 pyperformance 验证沉淀为 8/16 lane 自适应调度、blue-server-53 稳定 profile、CinderX manager/worker venv 注入、SSH 代理和稳定性复跑流程。
+- 新增 `cinderx-evidence-table` skill，定义单用例深钻的证据表 E1–E9 三段式结构（What/Verdict/Gate）、每步必贴证据与闭环判据，并规定 ISA/指令集/微架构/硬件层的工具证据和 SPE/IBS 采样可用性探测原则（不绑定特定平台结论）。
+- 新增 `cinderx-evidence-analyst` agent，作为证据表唯一负责人，跨层追因（HIR/LIR→机器码→ISA→微架构→硬件），在 E6 接手收口判读，并对穿刺数据可信度负责。
+- 新增 `workflow-platform-differential-discovery-deepdive` workflow，按用例深钻（per-case）承载证据驱动流程：12 阶段分派表，E6 为证据采集与收口判读的分界线，与 matrix-first 粗筛 workflow 两层并行。
+
+### Changed
+
+- 为 matrix-first 粗筛 `workflow-platform-differential-discovery` 增加候选用例清单输出契约，作为深钻 workflow 阶段 0 的推荐选例输入（非强制）。
+- 在 `using-cpython-optimize` router 登记 `cinderx-evidence-analyst`（Agent 路由）、`workflow-platform-differential-discovery-deepdive`（Workflow 路由）和 `cinderx-evidence-table`（专业 Skill），区分"系统找平台优化点（粗筛）"与"深钻单用例拿可信优化点"两个目标。
+- `.claude-plugin/plugin.json` 版本从滞后的 0.8.9 补齐并随本次升到 1.0.0，与 `.codex-plugin/plugin.json`、`package.json` 对齐。
 
 ## [0.9.0] - 2026-06-16
 
