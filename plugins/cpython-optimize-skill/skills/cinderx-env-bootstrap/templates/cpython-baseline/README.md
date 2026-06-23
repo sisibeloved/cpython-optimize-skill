@@ -20,10 +20,12 @@ python -m pyperformance run ...
 当前镜像尽量向真实环境对齐：
 
 - `openEuler 24.03 LTS SP3`
-- `gcc 14.2.0`
+- CPython 使用 GCC 12.3.1
+- CinderX 使用 GCC 14
 - 容器内代理默认使用 `host.docker.internal:7890`
-- Python 3.14 在镜像内构建并安装到 `/opt/python314`
-- `/opt/python314` 使用非共享 libpython 构建，供 AArch64 RuntimeTests / CinderX JIT TLS offset 探测使用；构建后自检 `Py_ENABLE_SHARED` 和 `libpython3.14*.so*`
+- Python 3.14 在镜像内构建并安装到默认 `/usr/local`
+- CPython `./configure` 只使用 `--enable-optimizations --with-lto`
+- 使用非共享 libpython 构建，供 AArch64 RuntimeTests / CinderX JIT TLS offset 探测使用；构建后自检 `Py_ENABLE_SHARED` 和 `libpython3.14*.so*`
 
 ## 挂载约定
 

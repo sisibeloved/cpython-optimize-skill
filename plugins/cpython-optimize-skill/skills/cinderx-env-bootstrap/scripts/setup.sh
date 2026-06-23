@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PYPERFORMANCE_TMP="$(mktemp -d /tmp/pyperformance.XXXXXX)"
 CINDERX_WHEEL_TMP="$(mktemp -d /tmp/cinderx-wheel.XXXXXX)"
 CINDERX_WHEEL_CACHE_DIR=${CINDERX_WHEEL_CACHE_DIR:-/opt/cinderx-wheel-cache}
+CINDERX_GCC_MAJOR=14
 PIP_INDEX_URL=${PIP_INDEX_URL:-https://repo.huaweicloud.com/repository/pypi/simple}
 DEFAULT_CPU_JOBS=$(getconf _NPROCESSORS_ONLN 2>/dev/null || nproc 2>/dev/null || echo 4)
 DEFAULT_MEM_JOBS=$(awk '/MemAvailable:/ {jobs = int($2 / 2097152); if (jobs < 1) jobs = 1; print jobs; exit}' /proc/meminfo 2>/dev/null || echo 1)
@@ -32,6 +33,10 @@ PY
 )"
 
 echo "=== Installing cinderx ==="
+[[ "$(gcc -dumpfullversion -dumpversion)" == "$CINDERX_GCC_MAJOR".* ]] || {
+  echo "CinderX build requires GCC ${CINDERX_GCC_MAJOR}.x, got $(gcc -dumpfullversion -dumpversion)" >&2
+  exit 1
+}
 mkdir -p "$CINDERX_WHEEL_CACHE_DIR"
 PYTHONJITDISABLE=1 python3 -m pip install --quiet build 2>&1 | grep -v notice | tail -1 || true
 (

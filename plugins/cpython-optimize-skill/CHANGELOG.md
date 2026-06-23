@@ -4,6 +4,14 @@
 
 格式基于 [Keep a Changelog 1.1.0](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)。
 
+## [1.0.1] - 2026-06-23
+
+### Fixed
+
+- 修正 `cpython-baseline` Docker 模板中的 CPython 编译参数，仅保留 `--enable-optimizations --with-lto`。
+- 固定 Docker 模板工具链分工：CPython 使用 GCC 12.3.1，CinderX 构建继续使用 GCC 14。
+- 将 Claude / Codex marketplace 插件 source 从本地路径切换为 GitHub 仓库子目录，避免本地安装无法升级。
+
 ## [1.0.0] - 2026-06-21
 
 首个正式大版本。Agent / Workflow / Skill 三层架构与跨平台差异分析能力完整成形，证据驱动深钻流程沉淀为可复用资产。

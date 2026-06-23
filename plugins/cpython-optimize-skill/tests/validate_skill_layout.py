@@ -9,8 +9,13 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = ROOT.parents[1]
 SKILLS_DIR = ROOT / "skills"
 AGENTS_DIR = ROOT / "agents"
+GITHUB_REPO = "https://github.com/sisibeloved/cpython-optimize-skill"
+GITHUB_REPO_GIT = f"{GITHUB_REPO}.git"
+PLUGIN_SUBDIR = "plugins/cpython-optimize-skill"
+GITHUB_PLUGIN_URL = f"{GITHUB_REPO}/tree/master/{PLUGIN_SUBDIR}"
 
 REQUIRED_SKILLS = {
     "using-cpython-optimize",
@@ -140,6 +145,45 @@ def validate_plugin_json(path: Path) -> None:
         raise AssertionError(f"{path.relative_to(ROOT)} 缺少字段: {missing}")
 
 
+def validate_marketplace_sources() -> None:
+    import json
+
+    codex_marketplace = json.loads(read_text(REPO_ROOT / ".agents" / "plugins" / "marketplace.json"))
+    claude_marketplace = json.loads(read_text(REPO_ROOT / ".claude-plugin" / "marketplace.json"))
+
+    codex_plugins = codex_marketplace.get("plugins", [])
+    if len(codex_plugins) != 1:
+        raise AssertionError(".agents/plugins/marketplace.json 必须只声明 cpython-optimize-skill 插件")
+
+    codex_source = codex_plugins[0].get("source")
+    expected_codex_source = {
+        "source": "git-subdir",
+        "url": GITHUB_REPO_GIT,
+        "ref": "master",
+        "path": PLUGIN_SUBDIR,
+    }
+    if codex_source != expected_codex_source:
+        raise AssertionError(
+            ".agents/plugins/marketplace.json 插件 source 必须指向 GitHub 仓库子目录，"
+            f"当前为 {codex_source!r}"
+        )
+
+    claude_plugins = claude_marketplace.get("plugins", [])
+    if len(claude_plugins) != 1:
+        raise AssertionError(".claude-plugin/marketplace.json 必须只声明 cpython-optimize-skill 插件")
+
+    claude_source = claude_plugins[0].get("source")
+    if claude_source != GITHUB_PLUGIN_URL:
+        raise AssertionError(
+            ".claude-plugin/marketplace.json 插件 source 必须指向 GitHub 仓库子目录，"
+            f"当前为 {claude_source!r}"
+        )
+
+    for source_text in [str(codex_source), str(claude_source)]:
+        if "./plugins/cpython-optimize-skill" in source_text or "'source': 'local'" in source_text:
+            raise AssertionError("marketplace 插件 source 不应再指向本地路径")
+
+
 def validate_skill_dir(path: Path) -> None:
     skill_md = path / "SKILL.md"
     if not skill_md.is_file():
@@ -252,14 +296,81 @@ def validate_hooks() -> None:
 
 
 def validate_template_contents() -> None:
-    cpython_baseline_dockerfile = (
-        SKILLS_DIR
-        / "cinderx-env-bootstrap"
-        / "templates"
-        / "cpython-baseline"
-        / "Dockerfile"
-    )
+    bootstrap_dir = SKILLS_DIR / "cinderx-env-bootstrap"
+    templates_dir = bootstrap_dir / "templates"
+    cpython_template_dir = templates_dir / "cpython-baseline"
+    cinderx_template_dir = templates_dir / "cinderx-test"
+    cpython_baseline_dockerfile = cpython_template_dir / "Dockerfile"
+    cpython_readme = cpython_template_dir / "README.md"
+    cinderx_compose = cinderx_template_dir / "docker-compose.yml"
+    cinderx_readme = cinderx_template_dir / "README.md"
+    setup_sh = bootstrap_dir / "scripts" / "setup.sh"
     dockerfile_text = read_text(cpython_baseline_dockerfile)
+    cpython_readme_text = read_text(cpython_readme)
+    cinderx_compose_text = read_text(cinderx_compose)
+    cinderx_readme_text = read_text(cinderx_readme)
+    setup_text = read_text(setup_sh)
+
+    configure_occurrences = [
+        path.relative_to(ROOT)
+        for path in templates_dir.rglob("*")
+        if path.is_file()
+        and (path.name == "Dockerfile" or path.suffix == ".sh")
+        and "./configure" in read_text(path)
+    ]
+    if configure_occurrences != [cpython_baseline_dockerfile.relative_to(ROOT)]:
+        raise AssertionError(f"CPython ./configure 入口必须统一到 cpython-baseline/Dockerfile，当前为 {configure_occurrences}")
+
+    if "context: ${DOCKERFILE_CONTEXT:-../cpython-baseline}" not in cinderx_compose_text:
+        raise AssertionError("cinderx-test 必须复用 cpython-baseline Dockerfile，避免出现第二套 CPython 编译路径")
+
+    lines = dockerfile_text.splitlines()
+    try:
+        start = next(index for index, line in enumerate(lines) if "./configure" in line)
+    except StopIteration as exc:
+        raise AssertionError("cpython-baseline Dockerfile 缺少 CPython ./configure 命令") from exc
+
+    configure_flags: list[str] = []
+    for line in lines[start + 1 :]:
+        stripped = line.strip()
+        if stripped.startswith("--"):
+            flag = stripped.split("; then", 1)[0].rstrip(" \\;")
+            configure_flags.append(flag)
+        if "; then" in stripped:
+            break
+
+    expected_flags = ["--enable-optimizations", "--with-lto"]
+    if configure_flags != expected_flags:
+        raise AssertionError(
+            "cpython-baseline Dockerfile 的 CPython configure 参数必须且只能是 "
+            f"{expected_flags}，当前为 {configure_flags}"
+        )
+
+    for needle in [
+        "ENV CPYTHON_GCC_VERSION=12.3.1",
+        'test "$(gcc -dumpfullversion -dumpversion)" = "$CPYTHON_GCC_VERSION"',
+        "CC=/usr/bin/gcc",
+        "CXX=/usr/bin/g++",
+    ]:
+        if needle not in dockerfile_text:
+            raise AssertionError(f"cpython-baseline Dockerfile 缺少 CPython GCC 12.3.1 固定信号: {needle}")
+
+    for needle in [
+        "CPython 使用 GCC 12.3.1",
+        "CinderX 使用 GCC 14",
+    ]:
+        if needle not in cpython_readme_text:
+            raise AssertionError(f"cpython-baseline README 缺少工具链分工说明: {needle}")
+
+    if "CinderX 编译继续使用 GCC 14" not in cinderx_readme_text:
+        raise AssertionError("cinderx-test README 缺少 CinderX GCC 14 工具链说明")
+
+    for needle in [
+        "CINDERX_GCC_MAJOR=14",
+        '[[ "$(gcc -dumpfullversion -dumpversion)" == "$CINDERX_GCC_MAJOR".* ]]',
+    ]:
+        if needle not in setup_text:
+            raise AssertionError(f"setup.sh 缺少 CinderX GCC 14 固定信号: {needle}")
 
     if "gcc-toolset-14-gcc-c++" not in dockerfile_text:
         raise AssertionError("cpython-baseline Dockerfile 缺少 openEuler GCC 14 C++ 正确包名: gcc-toolset-14-gcc-c++")
@@ -278,17 +389,27 @@ def validate_template_contents() -> None:
         if needle not in env_validate_text:
             raise AssertionError(f"cinderx-env-validate 缺少 AArch64 TLS 环境漂移信号: {needle}")
 
-    setup_sh = SKILLS_DIR / "cinderx-env-bootstrap" / "scripts" / "setup.sh"
-    setup_text = read_text(setup_sh)
     if "repo.huaweicloud.com/repository/pypi/simple" not in setup_text:
         raise AssertionError("cinderx-env-bootstrap setup.sh 默认 pip 镜像源应为华为云")
     if "mirrors.aliyun.com" in setup_text or "aliyun" in setup_text.lower():
         raise AssertionError("cinderx-env-bootstrap setup.sh 不应再默认使用阿里云 pip 镜像源")
+    forbidden_needles = [
+        "--prefix=",
+        "--enable-shared",
+        "--with-ensurepip",
+        "/opt/python314",
+    ]
+    for needle in forbidden_needles:
+        if needle in dockerfile_text:
+            raise AssertionError(f"cpython-baseline Dockerfile 不应包含旧编译/安装假设: {needle}")
+        if needle in cpython_readme_text:
+            raise AssertionError(f"cpython-baseline README 不应包含旧编译/安装假设: {needle}")
 
 
 def main() -> int:
     # 1. 顶层目录结构
     validate_directory_layout(ROOT, TOP_LEVEL_LAYOUT, "")
+    validate_marketplace_sources()
 
     # 2. hooks 结构
     validate_directory_layout(ROOT / "hooks", HOOKS_LAYOUT, "hooks/ ")
@@ -318,11 +439,11 @@ def main() -> int:
     for skill_dir in skill_dirs:
         validate_skill_dir(skill_dir)
 
-    # 5. agents/ 角色文档应保持中文模板
-    validate_agent_docs()
-
-    # 6. 模板内容不能包含已知坏包名或坏命令
+    # 5. 模板内容不能包含已知坏包名或坏命令
     validate_template_contents()
+
+    # 6. agents/ 角色文档应保持中文模板
+    validate_agent_docs()
 
     print("layout validation passed")
     return 0

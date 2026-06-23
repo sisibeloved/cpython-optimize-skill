@@ -11,7 +11,7 @@ python -m pyperformance run ...
 
 - 尽量贴近真实服务器环境
   - `openEuler 24.03 LTS SP3`
-  - `gcc 14.2.0`
+  - CinderX 编译继续使用 GCC 14
   - 容器内代理默认走 `host.docker.internal:7890`
 - 使用真实 `pyperformance run` 路径暴露 JIT 正确性问题
 - benchmark 元数据仍然由 `configs/<benchmark>/benchmark.toml` 驱动

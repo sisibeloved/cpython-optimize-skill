@@ -7,8 +7,10 @@
         {
             "name": "cpython-optimize-skill",
             "source": {
-                "source": "local",
-                "path": "./plugins/cpython-optimize-skill"
+                "source": "git-subdir",
+                "url": "https://github.com/sisibeloved/cpython-optimize-skill.git",
+                "ref": "master",
+                "path": "plugins/cpython-optimize-skill"
             },
             "category": "workflow"
         }
