@@ -58,7 +58,7 @@ Agent 文档不是原生 Skill 自动触发单元。主 Agent 或 hook 一旦决
 
 ## 专业 Skill
 
-`cinderx-env-validate`、`cinderx-env-clean`、`cinderx-env-bootstrap`、`cinderx-remote-lab-ops`、`cinderx-ab-run-slot`、`cpython-runtime-test-run`、`cinderx-smoke-check`、`pyperformance-worker-run`、`pyperformance-suite-run`、`pyperformance-result-compare`、`cinderx-gdb-core-triage`、`cinderx-hir-dump`、`cinderx-jit-entry-check`、`cinderx-hir-lir-analyze`、`cinderx-interpreter-case-analyze`、`cinderx-isa-microarch-compare`、`cinderx-evidence-table`、`cinderx-optimization-report`、`validation-strategy`。
+`cinderx-env-validate`、`cinderx-env-clean`、`cinderx-env-bootstrap`、`cinderx-remote-lab-ops`、`cinderx-ab-run-slot`、`cpython-runtime-test-run`、`cinderx-smoke-check`、`pyperformance-worker-run`、`pyperformance-suite-run`、`pyperformance-result-compare`、`pyperformance-stat-report`、`cinderx-gdb-core-triage`、`cinderx-hir-dump`、`cinderx-jit-entry-check`、`cinderx-hir-lir-analyze`、`cinderx-interpreter-case-analyze`、`cinderx-isa-microarch-compare`、`cinderx-evidence-table`、`cinderx-optimization-report`、`validation-strategy`。
 
 ## Workflow 路由
 

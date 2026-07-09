@@ -29,6 +29,7 @@ REQUIRED_SKILLS = {
     "pyperformance-worker-run",
     "pyperformance-suite-run",
     "pyperformance-result-compare",
+    "pyperformance-stat-report",
     "cinderx-gdb-core-triage",
     "cinderx-hir-dump",
     "cinderx-jit-entry-check",

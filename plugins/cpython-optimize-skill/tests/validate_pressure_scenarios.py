@@ -21,6 +21,7 @@ PROFESSIONAL_SKILLS = [
     "pyperformance-worker-run",
     "pyperformance-suite-run",
     "pyperformance-result-compare",
+    "pyperformance-stat-report",
     "cinderx-gdb-core-triage",
     "cinderx-hir-dump",
     "cinderx-jit-entry-check",
@@ -308,8 +309,25 @@ def main() -> int:
         "pyperformance-worker-run",
         "pyperformance-suite-run",
         "pyperformance-result-compare",
+        "pyperformance-stat-report",
     ]:
         require(skill_texts[name], "pyperformance-env-contract.md", name)
+    require_all(
+        skill_texts["pyperformance-stat-report"],
+        [
+            "get_stat.py",
+            "scripts/get_stat.py",
+            "-c",
+            "--benchmarks",
+            "benchmark_comparison.xlsx",
+            "benchmark_trends_part",
+            "openpyxl",
+            "matplotlib",
+            "console-only",
+            "run.json",
+        ],
+        "pyperformance-stat-report",
+    )
     require(workflows["regression"], "pyperformance-env-contract.md", "workflow-pyperformance-regression")
     require(workflows["jit"], "pyperformance-env-contract.md", "workflow-jit-optimization-analysis")
 
