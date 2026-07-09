@@ -259,7 +259,7 @@ def main() -> int:
 
     require_all(
         skill_texts["cinderx-env-validate"],
-        ["目标 Python 版本固定为 `Python 3.14.3`", "SOABI", "patchlevel.h", "cinderx.__file__", "_cinderx", "pyperformance 1.14", "GCC", "openEuler", "reusable", "本地 CPython 仓", "3.16.0a0", "安全切换", "git worktree", "git status --short", "git show -s --format=%H", "Include/patchlevel.h", "Py_ENABLE_SHARED", "_Python_LIBRARY_RELEASE", "TLSDESC", "DetectsThreadStateOffset", "tstate_offset = -1", "baseline-source-contract.md", "baseline_source_untrusted"],
+        ["目标 Python 版本固定为 `Python 3.14.3`", "SOABI", "patchlevel.h", "cinderx.__file__", "_cinderx", "pyperformance 1.13.0", "GCC", "openEuler", "reusable", "本地 CPython 仓", "3.16.0a0", "安全切换", "git worktree", "git status --short", "git show -s --format=%H", "Include/patchlevel.h", "Py_ENABLE_SHARED", "_Python_LIBRARY_RELEASE", "TLSDESC", "DetectsThreadStateOffset", "tstate_offset = -1", "baseline-source-contract.md", "baseline_source_untrusted"],
         "cinderx-env-validate",
     )
     require_all(

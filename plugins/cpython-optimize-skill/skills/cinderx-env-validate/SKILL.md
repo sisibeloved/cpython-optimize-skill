@@ -50,7 +50,7 @@ baseline 必须单独校验：
 - baseline source：按 `baseline-source-contract.md` 校验口径 baseline、提交 baseline、source path、commit/ref、dirty 状态和唯一差异轴。
 - AArch64 RuntimeTests TLS：检查 `Py_ENABLE_SHARED`、`CONFIG_ARGS`、`LIBDIR`、`LIBRARY`、`LDLIBRARY` 和 CMake `_Python_LIBRARY_RELEASE`；若解析到 `libpython3.14.so`、出现 `_PyThreadState_GetCurrent@plt`、`TLSDESC`、`DetectsThreadStateOffset` 失败或 `tstate_offset = -1`，判定为环境形态不满足 CinderX AArch64 TLS offset 探测，不要继续用该环境跑 RuntimeTests。
 - CinderX：commit、branch、`cinderx.__file__`、`cinderx.is_initialized()`、`cinderx.get_import_error()`、`_cinderx`。
-- pyperformance：路径、`pyperformance 1.14`、benchmark 源码和 worker 能否继承环境。
+- pyperformance：路径、`pyperformance 1.13.0`、benchmark 源码和 worker 能否继承环境。
 - toolchain：GCC、libstdc++、openEuler / 宿主发行版、Docker 可用性。
 - Docker 双线：`cinderx-test` 与 `cpython-baseline` 是否存在且 bind mount 指向正确源码。
 - JIT flags：`PYTHONJITAUTO`、`PYTHONJITHUGEPAGES`、HIR/JIT dump 变量是否污染正式跑分。
