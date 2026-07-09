@@ -26,6 +26,14 @@ pyperformance 是 driver -> manager -> worker 架构，部分 benchmark 还会�
 | 环境变量 | `--inherit-environ` 覆盖 `PYTHONPATH`、`LD_LIBRARY_PATH`、`PYTHONJIT*`、`CINDERX_*`、`PYPERFORMANCE_HOOK_ROOT` / `PYPERF_HOOK_ROOT` 等需要传给 worker 的变量 |
 | JIT 初始化 | 在 worker 内证明 `import cinderx`、`import _cinderx`、`cinderx.__file__`、`cinderx.get_import_error()`、`cinderx.is_initialized()` 与 CinderX JIT 口径一致，并能在 jit.log/HIR/统计中关联到目标 benchmark 本体 |
 
+人工创建 pyperformance venv 时，CinderX candidate 线在 `python3.14 -m pyperformance venv create --inherit-environ http_proxy,https_proxy` 之后必须把 worker `pyvenv.cfg` 改成 `include-system-site-packages = true`：
+
+```bash
+sed -i 's/^include-system-site-packages = false/include-system-site-packages = true/' venv/<venv_name>/pyvenv.cfg
+```
+
+测试 CPython baseline 数据时保持或改回 `include-system-site-packages = false`，并证明没有误继承 CinderX。
+
 结论规则：
 - 只看到 driver import 成功，不代表 worker 启用了 CinderX JIT。
 - 只安装 CinderX 包，不代表 pyperformance 新建的 worker venv 能看到 `.pth`。
