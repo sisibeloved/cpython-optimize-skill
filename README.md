@@ -66,6 +66,7 @@ Workflow 是多个技能和专门 Agent 的编排入口；原子技能继续负�
 | 📈 `pyperformance-suite-run` | 正式 `python -m pyperformance run` | — |
 | ⚡ `cinderx-parallel-pyperformance` | NUMA/L3-aware 8/16 lane 并行 pyperformance、worker venv 注入和稳定性复跑 | references/、scripts/ |
 | 📉 `pyperformance-result-compare` | run.json、speedup.json、收益/回归/噪声判断 | — |
+| 🧾 `pyperformance-stat-report` | 多个 pyperformance JSON 生成控制台、Excel 和趋势图报告 | scripts/ |
 | 🧯 `cinderx-gdb-core-triage` | SIGSEGV、exit 139、core、gdb 证据链 | references/ |
 | 🧾 `cinderx-hir-dump` | 真实 worker 命令叠加 HIR / jit.log | — |
 | 🔬 `cinderx-jit-entry-check` | 确认 benchmark 本体进入 CinderX JIT | — |
@@ -164,6 +165,7 @@ Agent 会根据任务自动选择对应技能，无需手动加载。
 │   │   ├── pyperformance-suite-run/
 │   │   ├── cinderx-parallel-pyperformance/
 │   │   ├── pyperformance-result-compare/
+│   │   ├── pyperformance-stat-report/
 │   │   ├── cinderx-gdb-core-triage/
 │   │   ├── cinderx-hir-dump/
 │   │   ├── cinderx-jit-entry-check/
@@ -201,6 +203,7 @@ Agent 会根据任务自动选择对应技能，无需手动加载。
 cd plugins/cpython-optimize-skill
 python3 tests/validate_skill_layout.py
 python3 tests/validate_pressure_scenarios.py
+python3 tests/test_pyperformance_stat_report.py
 ```
 
 ## 📜 版本历史
