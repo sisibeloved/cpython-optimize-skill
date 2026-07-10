@@ -86,6 +86,10 @@ class PyperformanceStatReportTests(unittest.TestCase):
             self.assertIn("bm_beta", result.stdout)
             self.assertIn("baseline.json", result.stdout)
             self.assertIn("candidate.json", result.stdout)
+            self.assertRegex(
+                result.stdout,
+                r"性能对比\s+NA\s+1\.0000\s+2\.0000",
+            )
             self.assert_no_report_artifacts(workdir)
 
     def test_documented_absolute_script_and_repeated_benchmarks_from_unrelated_cwd(self) -> None:
@@ -169,6 +173,24 @@ class PyperformanceStatReportTests(unittest.TestCase):
             self.assertIn("至少还需要一个有效 candidate", filtered_result.stdout)
             self.assert_no_report_artifacts(workdir)
 
+    def test_rejects_equivalent_paths_to_same_physical_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workdir = Path(tmp)
+            nested = workdir / "nested"
+            nested.mkdir()
+            baseline = workdir / "baseline.json"
+            equivalent_path = nested / ".." / "baseline.json"
+            write_result(baseline, {"bm_alpha": 1.0})
+
+            result = self.run_script(
+                ["-c", str(baseline), str(equivalent_path)], workdir
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("重复 JSON 输入", result.stdout)
+            self.assertIn("指向同一物理文件", result.stdout)
+            self.assert_no_report_artifacts(workdir)
+
     def test_default_mode_supports_25_inputs_and_excel_column_aa(self) -> None:
         try:
             from openpyxl import load_workbook
@@ -186,9 +208,9 @@ class PyperformanceStatReportTests(unittest.TestCase):
 
             with working_directory(workdir), mock.patch.object(
                 module, "import_pyplot", return_value=object()
-            ), mock.patch.object(module, "plot_trends_paginated") as plot_mock, redirect_stdout(
-                io.StringIO()
-            ):
+            ), mock.patch.object(
+                module, "plot_trends_paginated", return_value=[]
+            ) as plot_mock, redirect_stdout(io.StringIO()):
                 returncode = module.main([str(path) for path in json_files])
 
             self.assertEqual(returncode, 0)
@@ -196,10 +218,49 @@ class PyperformanceStatReportTests(unittest.TestCase):
             try:
                 worksheet = workbook.active
                 self.assertEqual(worksheet["AA1"].value, "run24.json")
+                self.assertEqual(worksheet["C3"].value, 1.0)
+                self.assertEqual(worksheet["AA3"].value, 0.8065)
                 self.assertIsNotNone(worksheet.column_dimensions["AA"].width)
             finally:
                 workbook.close()
             self.assertEqual(plot_mock.call_args.args[2][-1], "run24.json")
+
+    def test_real_agg_plot_generates_multiple_png_pages(self) -> None:
+        try:
+            import matplotlib
+        except ImportError:
+            self.skipTest("matplotlib is required for real PNG generation")
+
+        matplotlib.use("Agg", force=True)
+        module = load_script_module()
+        plt = module.import_pyplot()
+        common_benchmarks = ["bm_alpha", "bm_beta", "bm_gamma"]
+        valid_files = ["baseline.json", "candidate.json"]
+        file_labels = valid_files
+        perf_ratios = {
+            "baseline.json": {name: 1.0 for name in common_benchmarks},
+            "candidate.json": {name: 2.0 for name in common_benchmarks},
+        }
+
+        with tempfile.TemporaryDirectory() as tmp, redirect_stdout(io.StringIO()):
+            base_name = Path(tmp) / "benchmark_trends"
+            png_paths = module.plot_trends_paginated(
+                common_benchmarks,
+                valid_files,
+                file_labels,
+                perf_ratios,
+                [1.0, 2.0],
+                plt,
+                benchmarks_per_page=2,
+                base_name=base_name,
+                announce=False,
+            )
+
+            self.assertEqual([path.name for path in png_paths], [
+                "benchmark_trends_part1.png",
+                "benchmark_trends_part2.png",
+            ])
+            self.assertTrue(all(path.stat().st_size > 0 for path in png_paths))
 
     def test_dependency_failure_happens_before_any_artifact_write(self) -> None:
         module = load_script_module()
@@ -235,22 +296,101 @@ class PyperformanceStatReportTests(unittest.TestCase):
             (workdir / "benchmark_trends_part2.png").write_bytes(b"old-page-2")
             (workdir / "benchmark_trends_preview.png").write_bytes(b"unrelated")
 
-            def write_one_page(*args, **kwargs) -> None:
-                (workdir / "benchmark_trends_part1.png").write_bytes(b"new-page-1")
+            def write_staged_excel(*args, **kwargs) -> None:
+                Path(kwargs["xlsx_path"]).write_bytes(b"new-xlsx")
+
+            def write_one_page(*args, **kwargs) -> list[Path]:
+                png_path = Path(f"{kwargs['base_name']}_part1.png")
+                png_path.write_bytes(b"new-page-1")
+                return [png_path]
 
             with working_directory(workdir), mock.patch.object(
                 module, "import_openpyxl", return_value=object()
             ), mock.patch.object(
                 module, "import_pyplot", return_value=object()
-            ), mock.patch.object(module, "save_excel"), mock.patch.object(
+            ), mock.patch.object(
+                module, "save_excel", side_effect=write_staged_excel
+            ), mock.patch.object(
                 module, "plot_trends_paginated", side_effect=write_one_page
             ), redirect_stdout(io.StringIO()):
                 returncode = module.main([str(baseline), str(candidate)])
 
             self.assertEqual(returncode, 0)
+            self.assertEqual((workdir / "benchmark_comparison.xlsx").read_bytes(), b"new-xlsx")
             self.assertEqual((workdir / "benchmark_trends_part1.png").read_bytes(), b"new-page-1")
             self.assertFalse((workdir / "benchmark_trends_part2.png").exists())
             self.assertTrue((workdir / "benchmark_trends_preview.png").exists())
+
+    def test_generation_failure_preserves_previous_complete_report(self) -> None:
+        module = load_script_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            workdir = Path(tmp)
+            baseline = workdir / "baseline.json"
+            candidate = workdir / "candidate.json"
+            write_result(baseline, {"bm_alpha": 1.0})
+            write_result(candidate, {"bm_alpha": 0.5})
+            old_xlsx = workdir / "benchmark_comparison.xlsx"
+            old_page_1 = workdir / "benchmark_trends_part1.png"
+            old_page_2 = workdir / "benchmark_trends_part2.png"
+            old_xlsx.write_bytes(b"old-xlsx")
+            old_page_1.write_bytes(b"old-page-1")
+            old_page_2.write_bytes(b"old-page-2")
+
+            def write_staged_excel(*args, **kwargs) -> None:
+                Path(kwargs["xlsx_path"]).write_bytes(b"new-xlsx")
+
+            def fail_during_plot(*args, **kwargs) -> list[Path]:
+                staged_page = Path(f"{kwargs['base_name']}_part1.png")
+                staged_page.write_bytes(b"partial-new-page")
+                raise OSError("simulated savefig failure")
+
+            with working_directory(workdir), mock.patch.object(
+                module, "import_openpyxl", return_value=object()
+            ), mock.patch.object(
+                module, "import_pyplot", return_value=object()
+            ), mock.patch.object(
+                module, "save_excel", side_effect=write_staged_excel
+            ), mock.patch.object(
+                module, "plot_trends_paginated", side_effect=fail_during_plot
+            ), redirect_stdout(io.StringIO()) as output:
+                returncode = module.main([str(baseline), str(candidate)])
+
+            self.assertEqual(returncode, 1)
+            self.assertIn("已保留原有完整报告", output.getvalue())
+            self.assertEqual(old_xlsx.read_bytes(), b"old-xlsx")
+            self.assertEqual(old_page_1.read_bytes(), b"old-page-1")
+            self.assertEqual(old_page_2.read_bytes(), b"old-page-2")
+            self.assertEqual(list(workdir.glob(".pyperformance-stat-report-*")), [])
+
+    def test_publish_failure_rolls_back_previous_report(self) -> None:
+        module = load_script_module()
+        with tempfile.TemporaryDirectory() as tmp:
+            workdir = Path(tmp)
+            staging_dir = workdir / "staging"
+            staging_dir.mkdir()
+            staged_xlsx = staging_dir / "benchmark_comparison.xlsx"
+            staged_page = staging_dir / "benchmark_trends_part1.png"
+            staged_xlsx.write_bytes(b"new-xlsx")
+            staged_page.write_bytes(b"new-page-1")
+            old_xlsx = workdir / "benchmark_comparison.xlsx"
+            old_page = workdir / "benchmark_trends_part1.png"
+            old_xlsx.write_bytes(b"old-xlsx")
+            old_page.write_bytes(b"old-page-1")
+            real_replace = os.replace
+
+            def fail_new_png_publish(source, destination) -> None:
+                if Path(source) == staged_page:
+                    raise OSError("simulated publish failure")
+                real_replace(source, destination)
+
+            with working_directory(workdir), mock.patch.object(
+                module.os, "replace", side_effect=fail_new_png_publish
+            ):
+                with self.assertRaises(OSError):
+                    module.publish_report_set(staged_xlsx, [staged_page])
+
+            self.assertEqual(old_xlsx.read_bytes(), b"old-xlsx")
+            self.assertEqual(old_page.read_bytes(), b"old-page-1")
 
 
 if __name__ == "__main__":

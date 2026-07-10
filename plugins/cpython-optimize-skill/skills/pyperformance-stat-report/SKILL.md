@@ -31,7 +31,7 @@ JSON 可以使用绝对路径，也可以使用相对报告目录的路径。未
 ## 模式
 
 - `-c` / `--console-only`：只打印对比表，不生成文件，不需要 `openpyxl` 或 `matplotlib`。
-- 默认模式：打印表格后生成 `benchmark_comparison.xlsx` 和 `benchmark_trends_part<N>.png`。
+- 默认模式：打印表格，在临时目录生成完整报告后统一发布 `benchmark_comparison.xlsx` 和 `benchmark_trends_part<N>.png`；生成失败时保留上一套完整报告。
 - `-b` / `--benchmarks`：只保留指定的公共 benchmark；每个 benchmark 单独写一个 `-b`，例如 `-b 2to3 -b chaos`，并保持用户给定顺序。
 
 默认产物模式需要：
@@ -44,6 +44,7 @@ python -m pip install openpyxl matplotlib
 
 - 只比较所有有效 JSON 共有的 benchmark。
 - 第一个 JSON 必须成功加载且包含 benchmark；除 baseline 外还必须至少有一个有效 candidate。
+- 拒绝通过等价路径、符号链接或硬链接重复传入同一物理 JSON，避免自比较报告。
 - 单项 ratio 和几何平均都使用 `baseline_time / current_time`。
 - ratio 大于 `1.0` 表示快于第一个 JSON；小于 `1.0` 表示慢于第一个 JSON。
 - 显示单位按 baseline 文件中该 benchmark 的耗时量级选择。
