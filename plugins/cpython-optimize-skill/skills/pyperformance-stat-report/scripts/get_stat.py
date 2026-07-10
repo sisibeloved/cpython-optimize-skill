@@ -6,8 +6,8 @@
 用法：
   python get_stat.py a.json d.json c.json b.json
   python get_stat.py -c a.json d.json c.json b.json
-  python get_stat.py -b 2to3 chaos nbody a.json d.json c.json b.json
-  python get_stat.py -c -b 2to3 chaos a.json b.json
+  python get_stat.py -b 2to3 -b chaos -b nbody a.json d.json c.json b.json
+  python get_stat.py -c -b 2to3 -b chaos a.json b.json
   python get_stat.py
 
 依赖：-c/--console-only 不需要额外依赖；生成 Excel/PNG 需要 pip install openpyxl matplotlib
@@ -16,27 +16,28 @@
 import json
 import glob
 import os
-import sys
 import argparse
 from math import exp, log
+from pathlib import Path
 
 
 def import_openpyxl():
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
-    except ImportError as exc:
+        from openpyxl.utils import get_column_letter
+    except Exception as exc:
         raise SystemExit(
             "Missing dependency: openpyxl. Install with: python -m pip install openpyxl"
         ) from exc
-    return Workbook, Font, Alignment, PatternFill, Border, Side
+    return Workbook, Font, Alignment, PatternFill, Border, Side, get_column_letter
 
 
 def import_pyplot():
     try:
         import matplotlib
         import matplotlib.pyplot as plt
-    except ImportError as exc:
+    except Exception as exc:
         raise SystemExit(
             "Missing dependency: matplotlib. Install with: python -m pip install matplotlib"
         ) from exc
@@ -108,20 +109,60 @@ def geometric_mean(values):
     return exp(sum(log(v) for v in pos) / len(pos))
 
 
+def make_unique_file_labels(file_paths):
+    """为输入文件生成最短且唯一的路径后缀标签。"""
+    path_parts = [Path(path).resolve().parts for path in file_paths]
+    labels = []
+
+    for parts in path_parts:
+        label = os.path.join(*parts)
+        for depth in range(1, len(parts) + 1):
+            suffix = parts[-depth:]
+            matches = sum(
+                1
+                for other in path_parts
+                if len(other) >= depth and other[-depth:] == suffix
+            )
+            if matches == 1:
+                label = os.path.join(*suffix)
+                break
+        labels.append(label)
+
+    totals = {label: labels.count(label) for label in labels}
+    seen = {}
+    unique_labels = []
+    for label in labels:
+        if totals[label] == 1:
+            unique_labels.append(label)
+            continue
+        seen[label] = seen.get(label, 0) + 1
+        unique_labels.append(f"{label}#{seen[label]}")
+    return unique_labels
+
+
+def remove_stale_plot_files(base_name='benchmark_trends'):
+    """删除脚本拥有的旧分页 PNG，避免重跑后混入过期页面。"""
+    base_path = Path(base_name)
+    directory = base_path.parent
+    prefix = f"{base_path.name}_part"
+    for path in directory.glob(f"{prefix}*.png"):
+        page_number = path.stem[len(prefix):]
+        if page_number.isdigit():
+            path.unlink()
+
+
 # ═══════════════════════════════════════════════════════════
 #  Excel 输出
 # ═══════════════════════════════════════════════════════════
 
-def save_excel(common_benchmarks, valid_files, all_data, units, divisors,
-               perf_geo_means, xlsx_path='benchmark_comparison.xlsx'):
+def save_excel(common_benchmarks, valid_files, file_labels, all_data, units, divisors,
+               perf_geo_means, excel_support, xlsx_path='benchmark_comparison.xlsx'):
     """生成带格式的 Excel 对比表格。"""
-    Workbook, Font, Alignment, PatternFill, Border, Side = import_openpyxl()
+    Workbook, Font, Alignment, PatternFill, Border, Side, get_column_letter = excel_support
 
     wb = Workbook()
     ws = wb.active
     ws.title = '性能对比'
-
-    file_labels = [os.path.basename(f) for f in valid_files]
 
     header_font = Font(bold=True, size=11, color='FFFFFF')
     header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
@@ -182,7 +223,7 @@ def save_excel(common_benchmarks, valid_files, all_data, units, divisors,
     ws.column_dimensions['A'].width = max(len(b) for b in common_benchmarks) + 4
     ws.column_dimensions['B'].width = 8
     for col_off, lb in enumerate(file_labels):
-        col_letter = chr(ord('C') + col_off)
+        col_letter = get_column_letter(3 + col_off)
         ws.column_dimensions[col_letter].width = max(len(lb), 12) + 4
 
     ws.freeze_panes = 'A2'
@@ -194,11 +235,9 @@ def save_excel(common_benchmarks, valid_files, all_data, units, divisors,
 #  绘图（分页）
 # ═══════════════════════════════════════════════════════════
 
-def plot_trends_paginated(common_benchmarks, valid_files, perf_ratios, perf_geo_means,
-                          benchmarks_per_page=20, base_name='benchmark_trends'):
-    plt = import_pyplot()
-
-    file_labels = [os.path.basename(f) for f in valid_files]
+def plot_trends_paginated(common_benchmarks, valid_files, file_labels, perf_ratios,
+                          perf_geo_means, plt, benchmarks_per_page=20,
+                          base_name='benchmark_trends'):
     n_bench = len(common_benchmarks)
     n_pages = (n_bench + benchmarks_per_page - 1) // benchmarks_per_page
     x = list(range(len(valid_files)))
@@ -273,14 +312,14 @@ def plot_trends_paginated(common_benchmarks, valid_files, perf_ratios, perf_geo_
 #  参数解析
 # ═══════════════════════════════════════════════════════════
 
-def parse_args():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description='pyperformance 多版本性能对比分析工具',
         epilog='示例:\n'
                '  python get_stat.py a.json d.json c.json b.json\n'
                '  python get_stat.py -c a.json d.json c.json b.json\n'
-               '  python get_stat.py -b 2to3 chaos nbody a.json b.json\n'
-               '  python get_stat.py -c -b 2to3 chaos a.json b.json\n'
+               '  python get_stat.py -b 2to3 -b chaos -b nbody a.json b.json\n'
+               '  python get_stat.py -c -b 2to3 -b chaos a.json b.json\n'
                '  python get_stat.py\n',
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -291,24 +330,24 @@ def parse_args():
     )
     parser.add_argument(
         '-b', '--benchmarks',
-        nargs='+',
+        action='append',
         metavar='NAME',
-        help='只查看指定的用例（空格分隔），不指定则查看全部公共用例',
+        help='只查看指定的用例；指定多个用例时重复使用 -b，不指定则查看全部公共用例',
     )
     parser.add_argument(
         'json_files',
         nargs='*',
         help='要对比的 JSON 文件（按指定顺序）；不传则自动扫描当前目录',
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 # ═══════════════════════════════════════════════════════════
 #  主流程
 # ═══════════════════════════════════════════════════════════
 
-def main():
-    args = parse_args()
+def main(argv=None):
+    args = parse_args(argv)
 
     # ── 1. 获取文件列表 ──
     if args.json_files:
@@ -316,31 +355,55 @@ def main():
         for jf in json_files:
             if not os.path.isfile(jf):
                 print(f"❌  文件不存在: {jf}")
-                sys.exit(1)
+                return 1
     else:
         json_files = sorted(glob.glob('*.json'))
 
     if not json_files:
         print("❌  未找到 JSON 文件。")
-        print(f"用法: python {os.path.basename(__file__)} [-c] [-b 用例1 用例2 ...] a.json b.json")
-        sys.exit(1)
+        print(f"用法: python {os.path.basename(__file__)} [-c] [-b 用例]... a.json b.json")
+        return 1
+
+    if len(json_files) < 2:
+        print("❌  至少需要两个 JSON 文件：第一个是 baseline，后续文件是 candidate。")
+        return 1
 
     print(f"📂  共 {len(json_files)} 个 JSON 文件（按指定顺序）：")
+    baseline_file = json_files[0]
     all_data = {}
-    for jf in json_files:
-        try:
-            all_data[jf] = load_benchmark_data(jf)
-            print(f"   ✅ {jf}  ({len(all_data[jf])} 个用例)")
-        except Exception as e:
-            print(f"   ⚠️  {jf} 加载失败: {e}")
 
-    valid_files = [jf for jf in json_files if jf in all_data and all_data[jf]]
-    if len(valid_files) < 1:
-        print("❌  没有有效数据。")
-        sys.exit(1)
+    try:
+        baseline_data = load_benchmark_data(baseline_file)
+    except Exception as e:
+        print(f"   ❌  baseline {baseline_file} 加载失败: {e}")
+        return 1
+    if not baseline_data:
+        print(f"   ❌  baseline {baseline_file} 没有可用 benchmark 数据。")
+        return 1
+
+    all_data[baseline_file] = baseline_data
+    valid_files = [baseline_file]
+    print(f"   ✅ {baseline_file}  ({len(baseline_data)} 个用例，baseline)")
+
+    for jf in json_files[1:]:
+        try:
+            candidate_data = load_benchmark_data(jf)
+        except Exception as e:
+            print(f"   ⚠️  {jf} 加载失败，已跳过: {e}")
+            continue
+        if not candidate_data:
+            print(f"   ⚠️  {jf} 没有可用 benchmark 数据，已跳过")
+            continue
+        all_data[jf] = candidate_data
+        valid_files.append(jf)
+        print(f"   ✅ {jf}  ({len(candidate_data)} 个用例)")
+
+    if len(valid_files) < 2:
+        print("❌  除有效 baseline 外，至少还需要一个有效 candidate JSON。")
+        return 1
 
     # ── 2. 取公共用例 ──
-    common = set(all_data[valid_files[0]].keys())
+    common = set(all_data[baseline_file].keys())
     for jf in valid_files[1:]:
         common &= set(all_data[jf].keys())
 
@@ -355,21 +418,20 @@ def main():
                 not_found.append(b)
         if not_found:
             print(f"\n⚠️  以下用例在公共用例中未找到，已跳过: {', '.join(not_found)}")
-            # 列出可用的用例帮助用户排查
             print(f"   可用的公共用例共 {len(common)} 个：")
             for name in sorted(common):
                 print(f"     - {name}")
         if not selected:
             print("❌  指定的用例均不存在。")
-            sys.exit(1)
-        common_benchmarks = selected  # 保持用户指定的顺序
+            return 1
+        common_benchmarks = selected
         print(f"\n🎯  已筛选 {len(common_benchmarks)} 个指定用例: {', '.join(common_benchmarks)}\n")
     else:
         common_benchmarks = sorted(common)
 
     if not common_benchmarks:
         print("❌  多个文件之间没有公共用例。")
-        sys.exit(1)
+        return 1
 
     if not args.benchmarks:
         print(f"\n🔗  公共用例数量: {len(common_benchmarks)}\n")
@@ -378,7 +440,7 @@ def main():
     units = {}
     divisors = {}
     for bench in common_benchmarks:
-        u, d = choose_unit(all_data[valid_files[0]][bench])
+        u, d = choose_unit(all_data[baseline_file][bench])
         units[bench] = u
         divisors[bench] = d
 
@@ -388,19 +450,19 @@ def main():
     for jf in valid_files:
         ratios = {}
         for bench in common_benchmarks:
-            ratios[bench] = all_data[valid_files[0]][bench] / all_data[jf][bench]
+            ratios[bench] = all_data[baseline_file][bench] / all_data[jf][bench]
         perf_ratios[jf] = ratios
         perf_geo_means.append(geometric_mean(list(ratios.values())))
 
     # ── 6. 终端表格（始终输出） ──
-    file_labels = [os.path.basename(f) for f in valid_files]
-    col_w = max(max(len(l) for l in file_labels), 12)
-    name_w = max(max(len(b) for b in common_benchmarks), 8)
+    file_labels = make_unique_file_labels(valid_files)
+    col_w = max(max(len(label) for label in file_labels), 12)
+    name_w = max(max(len(bench) for bench in common_benchmarks), 8)
     unit_w = 5
 
     header = f"{'Benchmark':<{name_w}}  {'Unit':<{unit_w}}"
-    for lb in file_labels:
-        header += f"  {lb:>{col_w}}"
+    for label in file_labels:
+        header += f"  {label:>{col_w}}"
     sep = '=' * len(header)
     thin = '-' * len(header)
 
@@ -410,29 +472,35 @@ def main():
     for bench in common_benchmarks:
         row = f"{bench:<{name_w}}  {units[bench]:<{unit_w}}"
         for jf in valid_files:
-            v = all_data[jf][bench] / divisors[bench]
-            row += f"  {v:>{col_w}.4f}"
+            value = all_data[jf][bench] / divisors[bench]
+            row += f"  {value:>{col_w}.4f}"
         print(row)
     print(thin)
     row = f"{'性能对比':<{name_w}}  {'NA':<{unit_w}}"
-    for gm in perf_geo_means:
-        row += f"  {gm:>{col_w}.4f}"
+    for geometric_mean_value in perf_geo_means:
+        row += f"  {geometric_mean_value:>{col_w}.4f}"
     print(row)
     print(sep)
 
     # ── 7. 如果指定了 -c，到此结束 ──
     if args.console_only:
         print("\n💡  已指定 -c 参数，仅打屏输出，跳过 Excel 和趋势图生成。")
-        return
+        return 0
 
-    # ── 8. 保存 Excel ──
-    save_excel(common_benchmarks, valid_files, all_data, units, divisors,
-               perf_geo_means)
+    # ── 8. 在写入任何报告前预检依赖并清理旧分页 ──
+    excel_support = import_openpyxl()
+    plt = import_pyplot()
+    remove_stale_plot_files()
 
-    # ── 9. 分页绘图 ──
-    plot_trends_paginated(common_benchmarks, valid_files, perf_ratios, perf_geo_means,
-                          benchmarks_per_page=20)
+    # ── 9. 保存 Excel ──
+    save_excel(common_benchmarks, valid_files, file_labels, all_data, units, divisors,
+               perf_geo_means, excel_support)
+
+    # ── 10. 分页绘图 ──
+    plot_trends_paginated(common_benchmarks, valid_files, file_labels, perf_ratios,
+                          perf_geo_means, plt, benchmarks_per_page=20)
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

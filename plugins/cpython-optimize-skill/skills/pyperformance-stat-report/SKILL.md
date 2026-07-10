@@ -17,19 +17,22 @@ CinderX/JIT 性能结论必须先确认结果满足 `../using-cpython-optimize/r
 
 ## 脚本
 
-使用 bundled helper：
+从已加载 skill 的目录解析 bundled helper 绝对路径，不要假设当前目录是插件根目录。保持报告输出目录为 working directory：
 
 ```bash
-python skills/pyperformance-stat-report/scripts/get_stat.py [-c] [-b <benchmark> ...] <baseline.json> <candidate.json> [more.json ...]
+SKILL_DIR="/absolute/path/from-loaded-skill/pyperformance-stat-report"
+SCRIPT="$SKILL_DIR/scripts/get_stat.py"
+cd <report-output-directory>
+python "$SCRIPT" [-c] [-b <benchmark>]... <baseline.json> <candidate.json> [more.json ...]
 ```
 
-从希望写入报告产物的目录执行，或传入 JSON 的绝对路径。未传 JSON 时脚本会扫描当前目录 `*.json`；正式报告中优先写显式路径。
+JSON 可以使用绝对路径，也可以使用相对报告目录的路径。未传 JSON 时脚本会扫描当前目录 `*.json`；正式报告中优先写显式路径。
 
 ## 模式
 
 - `-c` / `--console-only`：只打印对比表，不生成文件，不需要 `openpyxl` 或 `matplotlib`。
 - 默认模式：打印表格后生成 `benchmark_comparison.xlsx` 和 `benchmark_trends_part<N>.png`。
-- `-b` / `--benchmarks`：只保留指定的公共 benchmark，并保持用户给定顺序。
+- `-b` / `--benchmarks`：只保留指定的公共 benchmark；每个 benchmark 单独写一个 `-b`，例如 `-b 2to3 -b chaos`，并保持用户给定顺序。
 
 默认产物模式需要：
 
@@ -40,6 +43,7 @@ python -m pip install openpyxl matplotlib
 ## 语义
 
 - 只比较所有有效 JSON 共有的 benchmark。
+- 第一个 JSON 必须成功加载且包含 benchmark；除 baseline 外还必须至少有一个有效 candidate。
 - 单项 ratio 和几何平均都使用 `baseline_time / current_time`。
 - ratio 大于 `1.0` 表示快于第一个 JSON；小于 `1.0` 表示慢于第一个 JSON。
 - 显示单位按 baseline 文件中该 benchmark 的耗时量级选择。
