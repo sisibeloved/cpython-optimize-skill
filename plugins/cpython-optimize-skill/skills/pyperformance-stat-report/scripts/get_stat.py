@@ -17,6 +17,7 @@ import json
 import glob
 import os
 import argparse
+import tempfile
 from math import exp, log
 from pathlib import Path
 
@@ -140,15 +141,84 @@ def make_unique_file_labels(file_paths):
     return unique_labels
 
 
-def remove_stale_plot_files(base_name='benchmark_trends'):
-    """删除脚本拥有的旧分页 PNG，避免重跑后混入过期页面。"""
+def find_duplicate_file(file_paths):
+    """返回首个指向同一物理文件的 (当前路径, 已见路径)。"""
+    for index, current in enumerate(file_paths):
+        for previous in file_paths[:index]:
+            try:
+                is_duplicate = os.path.samefile(current, previous)
+            except OSError:
+                is_duplicate = Path(current).resolve() == Path(previous).resolve()
+            if is_duplicate:
+                return current, previous
+    return None
+
+
+def numbered_plot_files(base_name='benchmark_trends'):
+    """按页码返回脚本拥有的分页 PNG。"""
     base_path = Path(base_name)
     directory = base_path.parent
     prefix = f"{base_path.name}_part"
+    numbered_paths = []
     for path in directory.glob(f"{prefix}*.png"):
         page_number = path.stem[len(prefix):]
         if page_number.isdigit():
-            path.unlink()
+            numbered_paths.append((int(page_number), path))
+    return [path for _, path in sorted(numbered_paths)]
+
+
+def publish_report_set(staged_xlsx, staged_pngs,
+                       xlsx_path='benchmark_comparison.xlsx',
+                       plot_base_name='benchmark_trends'):
+    """发布完整报告集合；发布失败时恢复上一套报告。"""
+    staged_xlsx = Path(staged_xlsx)
+    staged_pngs = [Path(path) for path in staged_pngs]
+    final_xlsx = Path(xlsx_path)
+    final_pngs = [
+        Path(f"{plot_base_name}_part{index}.png")
+        for index in range(1, len(staged_pngs) + 1)
+    ]
+
+    previous_paths = []
+    if final_xlsx.exists():
+        previous_paths.append(final_xlsx)
+    previous_paths.extend(numbered_plot_files(plot_base_name))
+
+    backup_dir = staged_xlsx.parent / 'previous-report'
+    backup_dir.mkdir()
+    moved_previous = []
+    published = []
+
+    try:
+        for index, previous_path in enumerate(previous_paths):
+            backup_path = backup_dir / f"{index}-{previous_path.name}"
+            os.replace(previous_path, backup_path)
+            moved_previous.append((backup_path, previous_path))
+
+        for staged_path, final_path in zip(
+            [staged_xlsx, *staged_pngs], [final_xlsx, *final_pngs]
+        ):
+            os.replace(staged_path, final_path)
+            published.append(final_path)
+    except Exception as publish_error:
+        rollback_errors = []
+        for final_path in reversed(published):
+            try:
+                final_path.unlink(missing_ok=True)
+            except OSError as exc:
+                rollback_errors.append(exc)
+        for backup_path, previous_path in reversed(moved_previous):
+            try:
+                os.replace(backup_path, previous_path)
+            except OSError as exc:
+                rollback_errors.append(exc)
+        if rollback_errors:
+            raise RuntimeError(
+                f"报告发布失败且旧报告回滚失败: {rollback_errors[0]}"
+            ) from publish_error
+        raise
+
+    return final_xlsx, final_pngs
 
 
 # ═══════════════════════════════════════════════════════════
@@ -156,7 +226,8 @@ def remove_stale_plot_files(base_name='benchmark_trends'):
 # ═══════════════════════════════════════════════════════════
 
 def save_excel(common_benchmarks, valid_files, file_labels, all_data, units, divisors,
-               perf_geo_means, excel_support, xlsx_path='benchmark_comparison.xlsx'):
+               perf_geo_means, excel_support, xlsx_path='benchmark_comparison.xlsx',
+               announce=True):
     """生成带格式的 Excel 对比表格。"""
     Workbook, Font, Alignment, PatternFill, Border, Side, get_column_letter = excel_support
 
@@ -228,7 +299,8 @@ def save_excel(common_benchmarks, valid_files, file_labels, all_data, units, div
 
     ws.freeze_panes = 'A2'
     wb.save(xlsx_path)
-    print(f"📄  Excel 表格已保存到 {xlsx_path}")
+    if announce:
+        print(f"📄  Excel 表格已保存到 {xlsx_path}")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -237,12 +309,15 @@ def save_excel(common_benchmarks, valid_files, file_labels, all_data, units, div
 
 def plot_trends_paginated(common_benchmarks, valid_files, file_labels, perf_ratios,
                           perf_geo_means, plt, benchmarks_per_page=20,
-                          base_name='benchmark_trends'):
+                          base_name='benchmark_trends', announce=True):
     n_bench = len(common_benchmarks)
     n_pages = (n_bench + benchmarks_per_page - 1) // benchmarks_per_page
     x = list(range(len(valid_files)))
 
-    print(f"\n📊  共 {n_bench} 个用例，将生成 {n_pages} 张图（每页最多 {benchmarks_per_page} 个用例）")
+    if announce:
+        print(f"\n📊  共 {n_bench} 个用例，将生成 {n_pages} 张图（每页最多 {benchmarks_per_page} 个用例）")
+
+    png_paths = []
 
     for page_idx in range(n_pages):
         start = page_idx * benchmarks_per_page
@@ -300,12 +375,18 @@ def plot_trends_paginated(common_benchmarks, valid_files, file_labels, perf_rati
         ax.set_xlabel('JSON Files', fontsize=10)
 
         png_path = f"{base_name}_part{page_idx + 1}.png"
-        plt.tight_layout(h_pad=0.8)
-        plt.savefig(png_path, dpi=150, bbox_inches='tight')
-        print(f"   ✅ {png_path}  ({len(page_benchmarks)} 个用例)")
-        plt.close()
+        try:
+            plt.tight_layout(h_pad=0.8)
+            plt.savefig(png_path, dpi=150, bbox_inches='tight')
+        finally:
+            plt.close()
+        png_paths.append(Path(png_path))
+        if announce:
+            print(f"   ✅ {png_path}  ({len(page_benchmarks)} 个用例)")
 
-    print()
+    if announce:
+        print()
+    return png_paths
 
 
 # ═══════════════════════════════════════════════════════════
@@ -366,6 +447,15 @@ def main(argv=None):
 
     if len(json_files) < 2:
         print("❌  至少需要两个 JSON 文件：第一个是 baseline，后续文件是 candidate。")
+        return 1
+
+    duplicate = find_duplicate_file(json_files)
+    if duplicate:
+        duplicate_path, original_path = duplicate
+        print(
+            f"❌  重复 JSON 输入: {duplicate_path} 与 {original_path} "
+            "指向同一物理文件。"
+        )
         return 1
 
     print(f"📂  共 {len(json_files)} 个 JSON 文件（按指定顺序）：")
@@ -487,18 +577,37 @@ def main(argv=None):
         print("\n💡  已指定 -c 参数，仅打屏输出，跳过 Excel 和趋势图生成。")
         return 0
 
-    # ── 8. 在写入任何报告前预检依赖并清理旧分页 ──
+    # ── 8. 在写入任何报告前预检依赖 ──
     excel_support = import_openpyxl()
     plt = import_pyplot()
-    remove_stale_plot_files()
 
-    # ── 9. 保存 Excel ──
-    save_excel(common_benchmarks, valid_files, file_labels, all_data, units, divisors,
-               perf_geo_means, excel_support)
+    # ── 9. 在临时目录生成完整集合，成功后统一发布 ──
+    try:
+        with tempfile.TemporaryDirectory(
+            prefix='.pyperformance-stat-report-', dir='.'
+        ) as staging_dir_name:
+            staging_dir = Path(staging_dir_name)
+            staged_xlsx = staging_dir / 'benchmark_comparison.xlsx'
+            staged_plot_base = staging_dir / 'benchmark_trends'
 
-    # ── 10. 分页绘图 ──
-    plot_trends_paginated(common_benchmarks, valid_files, file_labels, perf_ratios,
-                          perf_geo_means, plt, benchmarks_per_page=20)
+            save_excel(
+                common_benchmarks, valid_files, file_labels, all_data, units, divisors,
+                perf_geo_means, excel_support, xlsx_path=staged_xlsx, announce=False,
+            )
+            staged_pngs = plot_trends_paginated(
+                common_benchmarks, valid_files, file_labels, perf_ratios,
+                perf_geo_means, plt, benchmarks_per_page=20,
+                base_name=staged_plot_base, announce=False,
+            )
+            final_xlsx, final_pngs = publish_report_set(staged_xlsx, staged_pngs)
+    except Exception as exc:
+        print(f"❌  报告生成失败，已保留原有完整报告: {exc}")
+        return 1
+
+    print(f"📄  Excel 表格已保存到 {final_xlsx}")
+    print(f"📊  已生成 {len(final_pngs)} 张趋势图：")
+    for png_path in final_pngs:
+        print(f"   ✅ {png_path}")
     return 0
 
 
