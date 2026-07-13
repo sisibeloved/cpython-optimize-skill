@@ -4,6 +4,19 @@
 
 格式基于 [Keep a Changelog 1.1.0](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)。
 
+## [1.0.2] - 2026-07-12
+
+### Added
+
+- 新增 `pyperformance-stat-report` skill，用 bundled `scripts/get_stat.py` 把已有的 pyperformance JSON 结果整理成多轮统计对比：支持 `--console-only` 控制台表格、`benchmark_comparison.xlsx` 和分页趋势 PNG（每 20 个用例一张图），并提供 `-b` 按用例过滤、`baseline_time/current_time` ratio 与几何平均语义。该 skill 只读结果，不替代 `pyperformance-result-compare` 对 baseline source、CPU affinity、worker env 和噪声可信度的判断。
+- 在 `pyperformance-env-contract.md` 补充 worker venv site-packages 规则：人工创建 candidate 线 venv 后必须把 `pyvenv.cfg` 改成 `include-system-site-packages = true`（给出 `sed` 命令），测 CPython baseline 时保持或改回 `false` 并证明未误继承 CinderX。
+- 新增 `tests/test_pyperformance_stat_report.py` 覆盖 console-only、Excel/PNG 生成和 benchmark filter 路径；README 补充 skill 表格条目、目录树和校验命令。
+
+### Changed
+
+- 将 `cinderx-env-validate` 与 pressure scenario 校验中的 pyperformance 版本引用统一更新到 1.13.0。
+- 在 `using-cpython-optimize` router 专业 Skill 列表登记 `pyperformance-stat-report`。
+
 ## [1.0.1] - 2026-06-23
 
 ### Fixed
