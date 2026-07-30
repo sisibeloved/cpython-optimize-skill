@@ -4,6 +4,17 @@
 
 格式基于 [Keep a Changelog 1.1.0](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)。
 
+## [1.0.3] - 2026-07-30
+
+### Added
+
+- 在 `design-documentation` skill 新增「特性设计（RFC）」文档类型与模板 `references/feature-rfc-template.md`：作为设计流程最上游（层级 0），在正式设计前对齐动机、目标/非目标、用例、总体方案、技术选型、风险与开放问题；带 `Status`（Draft/Reviewing/Approved/Rejected/Superseded）状态字段并要求关联 Issue/PR。
+
+### Changed
+
+- 重写 `design-documentation` 的 `SKILL.md` 提示词：新增「视图规范与制图约定」统一架构图（框图，决定系统/组件/模块设计元素）、上下文视图（一组逻辑接口）、流程图（单逻辑接口）三类图的元素对应与聚合关系，并定义逻辑元素→代码→构建→交付→部署的模型链。
+- 强化「架构设计」「功能设计」的总-分结构：总述给整体重点/边界/交互形式，分述须由总述推理而来；明确功能设计是架构设计架构图的 1 层/2 层展开，两者元素一一对应。
+
 ## [1.0.2] - 2026-07-12
 
 ### Added
