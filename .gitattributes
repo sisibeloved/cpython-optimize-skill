@@ -1,0 +1,15 @@
+# 统一换行符为 LF：仓库内所有文本文件入库与检出均为 LF。
+# 跨 WSL/Windows 协作时，避免 core.autocrlf 把检出转成 CRLF 造成换行符不一致。
+* text=auto eol=lf
+
+# 二进制文件不做换行符转换
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary
+*.gz   binary
+*.xlsx binary
+*.whl  binary
