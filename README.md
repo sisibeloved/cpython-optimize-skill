@@ -1,6 +1,6 @@
 # 🔧 CPython/CinderX 性能优化技能仓库
 
-[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](plugins/cpython-optimize-skill/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](plugins/cpython-optimize-skill/CHANGELOG.md)
 [![Codex](https://img.shields.io/badge/Codex-plugin-0A7EA4.svg)](#codex-cli)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757.svg)](#claude-code插件市场)
 [![Skills](https://img.shields.io/badge/skills-32-success.svg)](#-技能一览)

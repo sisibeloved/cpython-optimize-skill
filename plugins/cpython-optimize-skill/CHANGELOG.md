@@ -4,6 +4,16 @@
 
 格式基于 [Keep a Changelog 1.1.0](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)。
 
+## [1.0.4] - 2026-08-02
+
+### Changed
+
+- 收紧 `design-documentation` 的「视图规范与制图约定」：
+  - **流程图统一为时序图**：明确"流程图"指 mermaid `sequenceDiagram`，参与者（`participant`）与架构图元素一一对应、消息（`->>`）代表单个逻辑接口调用；禁止用 `flowchart`/`graph` 替代时序图表达模块间交互流程。
+  - **架构图必须同时呈现包含与依赖**：用 `graph TB` 绘制，包含关系用 `subgraph` 嵌套（组件=子图、模块=子图内节点），依赖关系用自上而下有向边（依赖方在上、被依赖者在下），二者缺一不可，不得平铺成无层次的并列框。
+  - **功能设计"实现设计"节必须配时序图**：每个功能项的"实现设计"用一张 `sequenceDiagram` 表现主要流程，不得用纯文字或 `flowchart` 代替；无跨模块交互时说明并填"不涉及"。同步更新 `function-design-template.md`。
+- 修正逻辑接口归属的内部矛盾：架构图只定义元素与结构（包含/依赖/外部边界），**不承载逻辑接口**；逻辑接口的归属收敛为"上下文图（一组聚合接口）→ 时序图（拆成单个接口消息）"的两级递进，不再把架构图与上下文图并列为接口承载方。`feature-rfc-template.md` 同步措辞。
+
 ## [1.0.3] - 2026-07-30
 
 ### Added
