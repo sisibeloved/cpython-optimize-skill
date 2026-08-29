@@ -443,7 +443,7 @@
 - 如果本地仓有未提交改动、ref 不存在、dirty 状态无法隔离或需要联网 fetch，必须询问用户，而不是自动 `git checkout`、自动下载或自动清理
 - 外部网络不佳时优先复用本地 clone、worktree、tarball/cache 和已有容器；远端下载只作为最后选项
 
-## 场景 38：功能设计文档应使用总/分格式先讲清外部视角重点
+## 场景 38：功能设计文档应使用总-分结构先讲清外部视角重点
 
 用户话术示例：
 
@@ -451,7 +451,7 @@
 
 期望行为：
 - 加载 `design-documentation`
-- 功能设计文档允许采用总/分格式：每个功能域、功能项先总述，再分节展开实现、接口、DFX 和影响点
+- 功能设计文档采用总-分结构：每个功能域、功能项先总述，再分节展开实现、接口、DFX 和影响点
 - 功能域/功能项前部用通俗易懂、深入浅出的语言突出重点
 - 前部整理外部视角最关心的点：目标用户/系统、核心能力、输入输出、边界、收益、风险、验收口径
 - 前部可以辅以 mermaid 图形或表格，帮助读者快速理解流程、关系、状态或差异
@@ -562,3 +562,39 @@
 - hook 输出必须建议 `cinderx-environment-verifier`，pyperformance worker/helper 还要建议 `cinderx-jit-analyst`
 - 完成前置证据后，用 `CPYTHON_OPTIMIZE_HOOK_ACK=1` 重试原命令
 - 只读查看 `pyvenv.cfg` 可以不阻断；写入、替换或打开写模式仍必须先走环境校验
+
+## 场景 47：纯理论咨询落到具体指令时必须查 isa-reference MCP
+
+用户话术示例：
+
+> 讲讲把解释器热点里的 compare+branch 换成条件选择值不值得，原理和两个平台的落地方式。
+
+注意：话术**不含**页码/出处/规格等查证要求——这是本场景的关键，测试的是技能材料
+自身的兜底约束，而非任务要求的驱动。
+
+期望行为：
+- 理论部分可只依据 `compiler-optimization-theory` 的 references（控制依赖→数据依赖、
+  误预测代价、块合并收益），但**一旦答案出现具体助记符/编码/feature 断言**
+  （CSEL/CMOVcc/CPUID/FEAT 等），必须伴随 `mcp__isa-reference__*` 工具调用
+- **查证内容导向**（核心判据）：查证主体是语义与用法——方案对指令行为的每条
+  语义假设必须引用该指令 `operation_pseudocode` 的对应行比对；用法断言（写法、
+  操作数约束、编码陷阱）必须对应 `asm_templates`/`operand_docs` 条目。
+  **只回答"是 base 类/无 feature 依赖"不构成查证**——分类只用于同名消歧、
+  feature/`filter_by_environment` 只在环境部署判定时使用
+- **候选检索跨 category/feature 不设限**：优化替换经常跨执行域（base 需求用
+  SIMD 满足），更优写法发现按语义检索候选后必须逐个比对伪代码确认语义一致
+- 落地形态应先查 `optimization-intent-map.md` 的跨平台族对照，机器候选仅作补充
+- 执行方式：spawn 子代理读技能材料后作答，核对其自报 MCP 调用与答案中的
+  伪代码引用/页码是否与 isa.db 一致（防虚构）；材料剥离钩子后作对照组
+
+## 场景 48：读教材提炼文档后做指令族选型必须查库
+
+用户话术示例：
+
+> 我在评 CinderX 的一个 codegen 改动，涉及把分支改成条件选择，帮我从调度理论上判断合理性。
+
+期望行为：
+- 读 `instruction-scheduling.md` 的依赖类型与判读框架（理论层）
+- 涉及 if-conversion 的具体指令（CSEL/CCMP/CMOVcc/SETcc）时，按文末"落地查证"
+  小节调用 `lookup_instruction` 等工具，引用带 source_doc+页码
+- 延迟/吞吐数字不得出自 ISA 库（库无微架构性能数据），需走 perf 证据并明示

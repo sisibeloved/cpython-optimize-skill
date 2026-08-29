@@ -58,7 +58,7 @@ Agent 文档不是原生 Skill 自动触发单元。主 Agent 或 hook 一旦决
 
 ## 专业 Skill
 
-`cinderx-env-validate`、`cinderx-env-clean`、`cinderx-env-bootstrap`、`cinderx-remote-lab-ops`、`cinderx-ab-run-slot`、`cpython-runtime-test-run`、`cinderx-smoke-check`、`pyperformance-worker-run`、`pyperformance-suite-run`、`pyperformance-result-compare`、`pyperformance-stat-report`、`cinderx-gdb-core-triage`、`cinderx-hir-dump`、`cinderx-jit-entry-check`、`cinderx-hir-lir-analyze`、`cinderx-interpreter-case-analyze`、`cinderx-isa-microarch-compare`、`cinderx-evidence-table`、`cinderx-optimization-report`、`validation-strategy`。
+`cinderx-env-validate`、`cinderx-env-clean`、`cinderx-env-bootstrap`、`cinderx-remote-lab-ops`、`cinderx-ab-run-slot`、`cpython-runtime-test-run`、`cinderx-smoke-check`、`pyperformance-worker-run`、`pyperformance-suite-run`、`pyperformance-result-compare`、`pyperformance-stat-report`、`cinderx-gdb-core-triage`、`cinderx-hir-dump`、`cinderx-jit-entry-check`、`cinderx-hir-lir-analyze`、`cinderx-interpreter-case-analyze`、`cinderx-isa-microarch-compare`、`cinderx-evidence-table`、`cinderx-optimization-report`、`validation-strategy`、`isa-instruction-lookup`、`compiler-optimization-theory`。
 
 ## Workflow 路由
 
@@ -78,3 +78,4 @@ Agent 文档不是原生 Skill 自动触发单元。主 Agent 或 hook 一旦决
 - `SIGSEGV` / core dump 走 `cinderx-gdb-core-triage`，日志不能替代 `gdb bt full`。
 - 远程命令输出契约用 `cinderx-remote-lab-ops`，异常耗时要诊断并询问用户。
 - 验证阶梯和成本预算用 `validation-strategy`。
+- 指令集规格（编码、汇编语法、伪代码、`FEAT_xxx` 依赖、跨平台等价候选）一律查 `isa-instruction-lookup`，禁止凭记忆回答；引用必须带 `source_doc` 和页码。

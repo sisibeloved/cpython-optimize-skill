@@ -1,9 +1,9 @@
 # 🔧 CPython/CinderX 性能优化技能仓库
 
-[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](plugins/cpython-optimize-skill/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](plugins/cpython-optimize-skill/CHANGELOG.md)
 [![Codex](https://img.shields.io/badge/Codex-plugin-0A7EA4.svg)](#codex-cli)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757.svg)](#claude-code插件市场)
-[![Skills](https://img.shields.io/badge/skills-32-success.svg)](#-技能一览)
+[![Skills](https://img.shields.io/badge/skills-34-success.svg)](#-技能一览)
 [![Agents](https://img.shields.io/badge/agents-9-informational.svg)](#-agent-一览)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -78,6 +78,8 @@ Workflow 是多个技能和专门 Agent 的编排入口；原子技能继续负�
 | 📝 `cinderx-optimization-report` | CinderX 优化报告和证据链沉淀 | references/ |
 | ✅ `validation-strategy` | 验证阶梯、成本预算、缓存复用 | — |
 | 📐 `design-documentation` | 架构/系统/功能/详细设计文档 | references/ |
+| 📖 `isa-instruction-lookup` | A64/x86 官方指令规格查询：编码、伪代码、`FEAT_xxx` 依赖、功能检索、跨平台等价候选、环境可用性判定（MCP：isa-reference） | references/、MCP |
+| 📚 `compiler-optimization-theory` | 编译器中后端理论背景：IR 设计、数据流优化、指令调度、寄存器分配的判读框架 | references/ |
 
 ## 🌟 推荐插件 / 技能 / 工具
 

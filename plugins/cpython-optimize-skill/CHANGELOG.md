@@ -4,6 +4,32 @@
 
 格式基于 [Keep a Changelog 1.1.0](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)。
 
+## [1.1.0] - 2026-08-29
+
+### Added
+
+- **`isa-instruction-lookup` skill + `isa-reference` MCP server**：A64/x86-64 官方指令规格查询底座，数据层与知识层分离（离线 ingest 产 `mcp/isa-reference/data/isa.db`，MCP 只读查询，skill 文档不复制库内容）。
+  - 数据：a64 2259 条（ARM 官方 ISA XML 2026-06：encoding/汇编语法/decode+operation 伪代码/`FEAT_xxx` 布尔表达式/PDF 页码回溯）；x86_64 854 条 = Intel SDM（Order 325462 rev050）771 + AMD APM（Doc 24594 r3.38）特有 83，含 opcode 表（VEX/EVEX/REX 前缀与 rel8/16/32 后缀形态）、Operation 伪代码、`CPUID:XXX` feature 共 4497 行（Intel opcode 表 CPUID Feature Flag 列为主源，AMD 页内正向声明 + Appendix D 为补充源）。
+  - MCP 工具 5 个：`lookup_instruction`（精确查；verbose 返回伪代码/语法/操作数文档，同名跨执行域变体靠 category 消歧）、`find_instruction_by_function`（FTS5 功能检索）、`find_equivalent_instruction`（跨平台等价候选，词面候选需伪代码比对定论）、`list_features`、`filter_by_environment`（环境 feature 列表 → available/conditional/unavailable）。
+  - `references/optimization-intent-map.md`：优化意图 → 指令族**双平台**映射（"条件选择取代比较+分支"→ CSEL 族/CMOVcc·SETcc 等 13 类），FTS 词面检索的桥接层；候选检索跨 category/feature 不设限。
+  - `references/source-authority-policy.md`：来源白名单（ARM-official/Intel-SDM/AMD-APM），非官方数据拒绝入库；x86 侧 Intel 与 AMD 重叠指令以 Intel 为 primary。
+  - ingest 脚本×3（重跑幂等）：`ingest_a64_xml.py`（官方 XML，自动识别当前版目录防新旧混灌）；`ingest_x86_sdm.py`（TOC 指令级书签 + 页内状态机：opcode 行组/表头折叠/页眉过滤/下一指令标题行截断防跨页串扰）；`ingest_x86_apm.py`（页内 `=1` 正向声明过滤 + 标题行截断 + Appendix D 回填）。
+  - `.mcp.json` 随插件注册 server（`${CLAUDE_PLUGIN_ROOT}` 相对路径）。
+- **`compiler-optimization-theory` skill**：Engineering a Compiler 2nd ed 逐章校对的理论框架（IR/SSA、优化安全前置条件、指令调度、寄存器分配，小节级 PDF 页码引用，各含 CinderX 挂钩判读框架与"落地查证"行动钩子；linear scan/PBQP 标注书外文献出处）。
+- **"理论 → 查证"行为体系**：两个 skill 的 SKILL.md 以**查证问题**为中心定义硬规则——语义核对（方案假设逐行比对 `operation_pseudocode`）、用法核对（`asm_templates`/`operand_docs`）、更优写法发现（按语义跨域检索候选 + 伪代码比对）；category 仅用于同名消歧、feature 仅用于环境部署判定，"只报 base 类/无 feature 依赖不构成查证"。
+- 测试：`test_isa_instruction_lookup.py` 12 项（Q2 意图检索第一名、跨平台 CSEL↔CMOVcc、BMI2 族完整性、白名单）+ `test_data_quality.py` 6 项（紧邻判据伪代码串扰、FTS 行同步、页码域、空 brief 预算、反向 CPUID 条件）。
+- 压力场景 47/48（`pressure-scenarios.md`）：纯理论咨询落到具体指令时必须查库 + 查证内容导向判据；子代理 A/B/D/D' 对照实验验证（材料剥离钩子作对照组，自报 MCP 调用与库内核验防虚构）。
+
+### Fixed
+
+- x86 ingest 数据质量（全部由全量诊断与行为实验发现并回归测试覆盖）：SETcc 伪代码混入 SETSSBSY 全文（切片右界 off-by-one）；SETcc 错挂 CPUID:SSE（AMD 页声明扫描溢出到邻页 + Exceptions 表反向条件 `=0` 被当正向声明）；Jcc/CALL/JMP opcode 整表丢失（`cb/cw/cd` 跳转后缀形态）；长标题书签折行导致截断失效（VCVTTPH2W 混入下一条伪代码）；CMOVcc 表混入 CMP 行（109→90 为去污后真值）。
+- 存量校验失败：`validate_pressure_scenarios.py` needle 措辞与 1.0.4 改版后的 `design-documentation` 术语漂移（"总/分格式"→"总-分结构"），校验器与场景 38 已对齐。
+
+### Changed
+
+- `using-cpython-optimize` 路由：专业 Skill 列表 +2；不变原则新增"指令集规格一律查 `isa-instruction-lookup`，禁止凭记忆回答，引用必须带 `source_doc` 和页码"。
+- README 技能一览 +2 行，skills 徽章 32→34。
+
 ## [1.0.4] - 2026-08-02
 
 ### Changed

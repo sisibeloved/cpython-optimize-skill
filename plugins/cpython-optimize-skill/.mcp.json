@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "isa-reference": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/isa-reference/src/server.py"]
+    }
+  }
+}

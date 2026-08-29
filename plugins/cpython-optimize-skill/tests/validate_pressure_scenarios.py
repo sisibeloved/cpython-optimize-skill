@@ -117,7 +117,7 @@ def main() -> int:
     baseline_source_contract = read(SKILLS / "using-cpython-optimize" / "references" / "baseline-source-contract.md")
     container_tooling_guidance = read(SKILLS / "using-cpython-optimize" / "references" / "container-tooling-guidance.md")
 
-    for number in range(1, 47):
+    for number in range(1, 49):
         require(scenarios, f"场景 {number}", "pressure scenarios")
 
     for name in PROFESSIONAL_SKILLS:
@@ -525,7 +525,7 @@ def main() -> int:
     )
     require_all(
         design_skill,
-        ["功能设计", "总/分格式", "功能域", "功能项", "通俗易懂", "深入浅出", "外部视角", "mermaid", "表格", "文档后半部"],
+        ["功能设计", "总-分结构", "功能域", "功能项", "通俗易懂", "深入浅出", "外部视角", "mermaid", "表格", "后部"],
         "design-documentation",
     )
     require_all(
@@ -578,7 +578,7 @@ def main() -> int:
             "本地 CPython 仓",
             "安全切换",
             "git worktree",
-            "总/分格式",
+            "总-分结构",
             "外部视角",
             "mermaid",
             "DetectsThreadStateOffset",
