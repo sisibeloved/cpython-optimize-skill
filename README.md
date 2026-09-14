@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](plugins/cpython-optimize-skill/CHANGELOG.md)
 [![Codex](https://img.shields.io/badge/Codex-plugin-0A7EA4.svg)](#codex-cli)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757.svg)](#claude-code插件市场)
-[![Skills](https://img.shields.io/badge/skills-34-success.svg)](#-技能一览)
+[![Skills](https://img.shields.io/badge/skills-35-success.svg)](#-技能一览)
 [![Agents](https://img.shields.io/badge/agents-9-informational.svg)](#-agent-一览)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -33,7 +33,9 @@
 | `workflow-pyperformance-regression` | L3/L4 正式 pyperformance 对比、性能回归和报告沉淀 |
 | `workflow-jit-optimization-analysis` | 单 benchmark JIT 热点、HIR/LIR 和优化点分析 |
 
-Workflow 是多个技能和专门 Agent 的编排入口；原子技能继续负责具体领域知识、命令约束和产物格式。
+单项任务直接使用对应技能。Workflow 用于衔接多阶段工作，表中的 Agent 是职责划分，可由主 Agent 顺序执行；只有宿主允许且确有独立工作时才委派。
+
+本仓按 [OpenAI 的 GPT-6 Astra 技能与提示词指导](https://learn.chatgpt.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra) 收紧描述、按需加载资料，并区分证据门禁与用户审批。已有授权覆盖的构建、测试和修复继续执行；验证范围根据改动风险选择。具体修改、字符统计和验证边界见 [2026-09-14 审计记录](docs/2026-09-14-astra-skill-audit.md)。
 
 ## 👥 Agent 一览
 
@@ -53,7 +55,7 @@ Workflow 是多个技能和专门 Agent 的编排入口；原子技能继续负�
 
 | 技能 | 用途 | 自带资源 |
 |------|------|---------|
-| 🎯 `using-cpython-optimize` | Orchestrator 路由入口 | — |
+| 🎯 `using-cpython-optimize` | 多阶段任务路由；单项操作直达对应技能 | references/ |
 | 🧪 `cinderx-env-validate` | Python/SOABI/CinderX/pyperformance 环境三态校验 | — |
 | 🧹 `cinderx-env-clean` | 清理被污染的 CinderX lab | — |
 | 🐳 `cinderx-env-bootstrap` | 初始化 Docker 双线、CinderX editable、pyperformance | templates/、scripts/ |
@@ -106,7 +108,9 @@ Workflow 是多个技能和专门 Agent 的编排入口；原子技能继续负�
 /plugin install cpython-optimize-skill
 ```
 
-安装后，Agent 通过 skill 描述按需加载 `using-cpython-optimize`。插件还带有轻量运行中 hook：当真实执行命令的 stdout/stderr 出现 `SIGSEGV`、`exit 139`、core dump、timeout 或远程无输出等信号时，只注入短提醒，提示 Agent 加载 `cinderx-gdb-core-triage` 或 `cinderx-remote-lab-ops`；`git show/log/diff`、`rg`、`sed`、`cat` 等只读查看命令不会因为历史文本里的触发词误报。
+安装后，Agent 通过技能描述选择当前任务所需技能。Claude Code 的执行前 hook 对定向测试与单 worker 注入相关提示；全量测试、范围不明的 helper 和环境改写保留前置检查，已有授权与证据可复用，检查完成后用命令局部的 `CPYTHON_OPTIMIZE_HOOK_ACK=1` 重试。ACK 是检查完成标记，不替代授权或 worker 证据，也不应全局设置。
+
+运行中 hook 在真实 stdout/stderr 出现 `SIGSEGV`、`exit 139`、core dump、timeout 或远程无输出等信号时，提示使用 `cinderx-gdb-core-triage` 或 `cinderx-remote-lab-ops`；`git show/log/diff`、`rg`、`sed`、`cat` 等只读查看不会因为历史文本里的触发词误报。hook 不注入整套 Agent 文档。
 
 首次启用或更新 hook 后，按宿主 Agent 的要求在 `/hooks` 中 review / trust 新的 hook 定义。
 
@@ -151,7 +155,8 @@ Agent 会根据任务自动选择对应技能，无需手动加载。
 │   │   └── plugin.json
 │   ├── hooks/
 │   │   ├── hooks.json
-│   │   └── runtime-skill-router
+│   │   ├── runtime-skill-router
+│   │   └── validation-skill-router
 │   ├── skills/                              # 原子技能 + workflow 技能
 │   │   ├── using-cpython-optimize/
 │   │   ├── cinderx-env-validate/
@@ -206,7 +211,13 @@ cd plugins/cpython-optimize-skill
 python3 tests/validate_skill_layout.py
 python3 tests/validate_pressure_scenarios.py
 python3 tests/test_pyperformance_stat_report.py
+python3 tests/test_runtime_skill_router.py
+python3 tests/test_validation_skill_router.py
+python3 tests/test_isa_instruction_lookup.py
+python3 tests/test_data_quality.py
 ```
+
+这些检查使用本地文件和临时夹具，不运行真实 CinderX 实验。`pressure-scenarios.md` 是行为验收用例；静态检查通过不等于完成了模型 A/B 评测。
 
 ## 📜 版本历史
 

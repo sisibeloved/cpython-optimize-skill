@@ -1,11 +1,11 @@
 ---
 name: cinderx-env-validate
-description: Use when 需要判断 CPython/CinderX 实验环境是否可复用，尤其涉及 Python 3.14.3、SOABI、patchlevel.h、_cinderx、pyperformance、Docker 双线或 JIT flags。
+description: Use when 校验 CPython/CinderX lab 的版本、ABI、源码和 worker 环境是否可复用。
 ---
 
 # CinderX Env Validate
 
-给 `cinderx-environment-verifier` 使用。结论只能是 `reusable`、`needs_bootstrap` 或 `needs_clean_bootstrap`。
+可由主 Agent 或 `cinderx-environment-verifier` 执行。环境三态为 `reusable`、`needs_bootstrap` 或 `needs_clean_bootstrap`。
 
 ## 版本事实源
 
@@ -25,7 +25,7 @@ baseline 必须单独校验：
 - 版本证据：`patchlevel.h`、`SOABI`、目标解释器和 include 路径。
 - 污染检查：baseline 不能误继承 candidate editable install、CinderX `.pth`、`PYTHONPATH`、JIT hook 或 `CINDERX_*`。
 
-若远程源码 dirty、ref 不明、版本不符、bind mount 指向不明或混入 candidate 污染，返回 `baseline_source_untrusted` 并要求用户指定 baseline、创建干净 worktree 或重建 baseline 环境；不能把该源码交给 A/B runner。
+若远程源码 dirty、ref 不明、版本不符、bind mount 指向不明或混入 candidate 污染，返回 `baseline_source_untrusted`，先查证来源；目标 ref 已知时可创建独立干净 worktree 并复验，只有 baseline 含义仍不明确时才询问。验证通过前不能把该源码交给 A/B runner。
 
 ## 本地 CPython 仓安全切换
 
@@ -41,18 +41,18 @@ baseline 必须单独校验：
 - 优先用 `git worktree add <dedicated-dir> <3.14.3-ref>` 或专用目录，不污染用户当前 checkout。
 - 只有在专用目录或明确授权的干净仓库中，才能切换 ref。
 - 切换后必须重新读取 `Include/patchlevel.h` 并运行目标解释器校验；通过后才可作为 baseline 事实源。
-- 本地没有 3.14.3 ref/cache、dirty 状态无法隔离或需要 `git fetch --tags` 时，先询问用户。
+- 已授权环境准备时可按需 fetch 缺少的目标 ref；仅在无法隔离 dirty 状态、需覆盖已有产物或违反网络限制时询问。
 - 外部网络不佳时，优先复用本地 clone、worktree、tarball/cache 和已有容器；远端下载/extract Python-3.14.3 只作为最后选项。
 
-## 必查项
+## 按实验需要校验
 
 - Python：目标解释器路径、`Python 3.14.3`、`SOABI`、include 路径、`patchlevel.h`。
-- baseline source：按 `baseline-source-contract.md` 校验口径 baseline、提交 baseline、source path、commit/ref、dirty 状态和唯一差异轴。
+- A/B 实验的 baseline source：按 `baseline-source-contract.md` 校验口径 baseline、提交 baseline、source path、commit/ref、dirty 状态和唯一差异轴。
 - AArch64 RuntimeTests TLS：检查 `Py_ENABLE_SHARED`、`CONFIG_ARGS`、`LIBDIR`、`LIBRARY`、`LDLIBRARY` 和 CMake `_Python_LIBRARY_RELEASE`；若解析到 `libpython3.14.so`、出现 `_PyThreadState_GetCurrent@plt`、`TLSDESC`、`DetectsThreadStateOffset` 失败或 `tstate_offset = -1`，判定为环境形态不满足 CinderX AArch64 TLS offset 探测，不要继续用该环境跑 RuntimeTests。
 - CinderX：commit、branch、`cinderx.__file__`、`cinderx.is_initialized()`、`cinderx.get_import_error()`、`_cinderx`。
-- pyperformance：路径、`pyperformance 1.13.0`、benchmark 源码和 worker 能否继承环境。
+- 运行 pyperformance 时：路径、`pyperformance 1.13.0`、benchmark 源码和 worker 能否继承环境。
 - toolchain：GCC、libstdc++、openEuler / 宿主发行版、Docker 可用性。
-- Docker 双线：`cinderx-test` 与 `cpython-baseline` 是否存在且 bind mount 指向正确源码。
+- 使用 Docker 双线时：`cinderx-test` 与 `cpython-baseline` 是否存在且 bind mount 指向正确源码。
 - JIT flags：`PYTHONJITAUTO`、`PYTHONJITHUGEPAGES`、HIR/JIT dump 变量是否污染正式跑分。
 
 ## 判定

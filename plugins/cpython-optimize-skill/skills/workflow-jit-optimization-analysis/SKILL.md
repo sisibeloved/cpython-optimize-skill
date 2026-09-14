@@ -1,6 +1,6 @@
 ---
 name: workflow-jit-optimization-analysis
-description: Use when 单个 CinderX 用例需要先判断是否进入 JIT，再分别做 JIT HIR/LIR 分析或非 JIT/解释执行阶段分析。
+description: Use when 从单个 CinderX benchmark 开始，判定 JIT/解释执行路径并定位优化点。
 ---
 
 # JIT / Interpreter Case Analysis Workflow
@@ -10,6 +10,8 @@ description: Use when 单个 CinderX 用例需要先判断是否进入 JIT，再
 Supporting Workflow：单 benchmark 用例分析分支。端到端任务中由主 Workflow 在 L2 阶段调用，先判定 JIT / 非 JIT，再分流。
 
 ## Agent 分派
+
+下表按当前证据选择所需阶段，已有匹配产物可复用；Agent 列是职责，可由主 Agent 顺序承担，仅在宿主允许且有独立工作时委派。
 
 | 阶段 | Agent | 技能 |
 |------|-------|------|

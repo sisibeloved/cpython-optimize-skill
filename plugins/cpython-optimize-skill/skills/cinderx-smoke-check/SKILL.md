@@ -1,6 +1,6 @@
 ---
 name: cinderx-smoke-check
-description: Use when 需要确认 CinderX 安装和最小 JIT 可用，包括 import cinderx、_cinderx、is_initialized、get_import_error、最小 JIT 和 HIR 输出。
+description: Use when 检查 CinderX 安装、初始化和最小 JIT 是否可用。
 ---
 
 # CinderX Smoke Check

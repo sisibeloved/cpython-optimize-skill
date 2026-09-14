@@ -1,6 +1,6 @@
 # Pressure Scenarios
 
-这些场景用于压测 skill 在真实对话中的引导能力。
+这些场景是人工/模型行为验收用例，不表示已经完成在线模型评测。静态验证只检查覆盖信号；hook 的实际输入输出由 test_*_skill_router.py 验证。
 
 ## 场景 1：用户要在 Kunpeng 上做 CinderX 功能验证
 
@@ -205,7 +205,7 @@
 - 区分正常长编译和异常网络卡顿
 - 网络相关命令要有超时、镜像源或缓存策略
 - 长时间无新增输出时先诊断 DNS/代理/连接/进度
-- 需要继续等待、换镜像、跳过或让用户处理时及时询问用户
+- 在已有预算内诊断和恢复；需改变指定镜像或超出权限/预算时才询问
 
 ## 场景 19：根据双平台性能差距定位优化点
 
@@ -267,7 +267,7 @@
 - `PostToolUse` runtime hook 捕获 `SIGSEGV` / `exit 139` / `EXIT_STATUS=139` / `core dump` 等工具输出信号
 - hook 只注入短 `additionalContext` 提醒，不重新塞入完整 `using-cpython-optimize`
 - Agent 根据提醒加载 `workflow-cinderx-crash-triage`，回到 `gdb bt full`、core dump、HIR dump 证据链
-- 遇到 `timeout`、网络卡顿或远程无输出时提醒加载 `cinderx-remote-lab-ops` 并及时询问用户
+- 遇到 `timeout`、网络卡顿或远程无输出时按需加载 `cinderx-remote-lab-ops`，先诊断，新的权限/成本决策才询问
 
 ## 场景 24：crash 取证应进入 CinderX 专业 skill
 
@@ -371,22 +371,22 @@
 > 远端环境好像坏了，直接帮我清一下，然后跑正式性能吧。
 
 期望行为：
-- 先识别这是清理环境和 L4 性能验证两个高成本/可能破坏性动作
+- 先查证污染与目标；正式性能不等于 L4 全量，不自动扩大范围
 - 环境句柄、要清理的 workspace、baseline/candidate、benchmark 范围不明确时触发反问
-- Codex 可用时使用 `request_user_input`，Claude Code 可用时使用 `AskUserQuestion`
+- Codex 按当前模式选可用工具，`request_user_input` 不可用时使用异步工具或文本；Claude Code 可用时使用 `AskUserQuestion`
 - 工具不可用时退化为文本选择题，不直接清理或启动全量 pyperformance
 
-## 场景 33：反问必须复用结构化模板
+## 场景 33：常规决策不变成反问
 
 用户话术示例：
 
 > 我不确定要先跑哪个平台，也不确定是否要全量 pyperformance，你自己看着办。
 
 期望行为：
-- 读取 `clarifying-question-templates.md`
-- 先问最高风险缺口，例如 `workflow_route` 或 `validation_level`
-- 每个问题有稳定 `question_id`、短 `header`、2-3 个互斥选项和推荐项
-- Codex / Claude Code / 文本降级的字段口径一致
+- 先查已有结果和可用环境，按目标选择低成本子集，说明假设并推进
+- 不要求用户选择内部 workflow_route 或 validation_level
+- 只有实验轴仍不明、成本将明显扩大或动作会影响其他任务时才询问
+- 需要提问时可参考 `clarifying-question-templates.md`；按宿主模式选用 `request_user_input`、异步工具、`AskUserQuestion` 或文本，不把模板变成必填问卷
 
 ## 场景 34：查看历史记录不应触发运行态 crash 护栏
 
@@ -410,8 +410,8 @@
 期望行为：
 - `PreToolUse` 的 `validation-skill-router` 挂在 `Bash` 上，但脚本内部按命令内容做低成本过滤
 - 只在 CPython/CinderX 源码仓中匹配构建、Runtime、pyperformance、pyperf、CinderX run_gate、pyperformance worker/helper 和本地 `pip install [options] .`
-- 定向 Runtime、test_cinderx/lib test 集成测试、subset pyperformance、pyperf compare 和 worker/helper 注入 `using-cpython-optimize`、`validation-strategy` 及对应原子 skill 的 `additionalContext`，本次命令继续执行
-- 全量 pyperformance、全量 RuntimeTests 功能测试或会改写环境的本地 pip install 先 `permissionDecision: deny`，要求完成环境审计、验证等级和范围确认
+- 定向 Runtime、test_cinderx/lib test 集成测试、subset pyperformance、pyperf compare 和单 worker 只注入对应原子 skill 的 additionalContext，本次命令继续执行；范围不明的 helper 保留检查
+- 全量 pyperformance、全量 RuntimeTests 功能测试、范围不明的 helper 或本地 pip install 先 `permissionDecision: deny`，核对适用环境、范围和预算，复用已有授权与证据
 - 已确认检查后可用 `CPYTHON_OPTIMIZE_HOOK_ACK=1` 前缀重试，避免重复阻断
 
 ## 场景 36：pyperformance 正式测试前必须提醒三类测试与 worker 口径
@@ -427,7 +427,7 @@
 - CinderX worker 要确认 `include-system-site-packages = true` 或等价的系统 site-packages 继承；Python baseline 要确认不会误继承 CinderX 安装
 - 正式性能命令必须包含 CPU 绑核、warmup、输出路径和 `--inherit-environ`，至少继承代理、`LD_LIBRARY_PATH`、插件/JIT 关键变量
 - 非 debug 正式运行必须关闭 HIR/JIT dump、`--debug-single-value` 和临时诊断变量；快速 L2 可用 bm/test-benchmark 脚本，但不能把它当最终正式数据
-- 文档规则不硬编码具体 pyperformance 用例名或输出文件名，只使用 `<benchmark-selector>`、`<result.json>` 这类占位
+- 可复用命令示例使用 `<benchmark-selector>`、`<result.json>`；实际实验记录使用真实命令和产物路径
 
 ## 场景 37：本地 CPython 仓不是 3.14.3 时应尝试安全切换
 
@@ -440,7 +440,7 @@
 - 先检查本地仓的 `git remote -v`、`git status --short`、`git show -s --format=%H`、`git tag/branch/ref` 和 `Include/patchlevel.h`
 - 如果本地存在 3.14.3 ref/tag/branch/cache，优先用 `git worktree` 独立 worktree 或专用目录切换，不污染用户当前 checkout
 - 切换后用目标解释器、`Include/patchlevel.h`、`sys.version`、`SOABI` 和 include 路径重新校验，校验通过才可作为 baseline 事实源
-- 如果本地仓有未提交改动、ref 不存在、dirty 状态无法隔离或需要联网 fetch，必须询问用户，而不是自动 `git checkout`、自动下载或自动清理
+- 已知目标 ref 可在独立 worktree 校验；已有环境准备授权且网络允许时可按需 fetch。只有无法隔离 dirty 状态、需覆盖用户产物或违反网络约束时才询问
 - 外部网络不佳时优先复用本地 clone、worktree、tarball/cache 和已有容器；远端下载只作为最后选项
 
 ## 场景 38：功能设计文档应使用总-分结构先讲清外部视角重点
@@ -496,7 +496,7 @@
 - 说明 `--affinity` 是 pyperf/pyperformance 的 CPU 绑核参数，用于限制 worker 进程运行在哪些 CPU 上，降低调度噪声，不是 benchmark 选择器或必须逐字照抄的语义参数
 - 先用 `nproc`、`lscpu`、`taskset -pc $$` 或容器 cpuset 信息确认当前可用 CPU，再把用户命令中的 affinity 映射到当前可用 CPU
 - 目标是保持可比性：baseline/candidate 使用相同数量、同类位置、互不冲突的 CPU set；当前机器没有原命令对应核号时，应重分配可用 CPU 并记录映射理由
-- 不能因为无法使用原始高核号就停止；只有可用 CPU 不足以保证 A/B 隔离或正式口径时，才询问用户串行执行、降低验证等级或更换环境
+- 核号不可用时先重映射，CPU 不足以并行隔离时默认串行并保持可比 affinity；违反用户明确固定的口径时才询问
 
 ## 场景 42：远程容器可用不等于源码可作为 baseline
 
@@ -508,7 +508,7 @@
 - `cinderx-env-validate`、`cinderx-ab-run-slot`、`pyperformance-baseline-runner`、`pyperformance-result-compare` 和 regression workflow 都引用 `baseline-source-contract.md`
 - 明确区分“执行环境可用”和“baseline 源码可信”：Docker/SSH/tmux 可用只能返回环境可执行，不能自动把远程 workspace 源码当 baseline fact source
 - baseline 必须有用户指定或技能可验证的事实源：baseline commit/ref、CPython 3.14.3 release source、`cpython-baseline` 容器 bind mount、干净 git worktree、`patchlevel.h`、`git status --short`、`git show -s --format=%H`
-- 远程源码若 dirty、ref 不明、patchlevel/SOABI 不符、容器 bind mount 指向不明或混入 candidate editable install，不能作为 baseline；应返回 `baseline_source_untrusted` 并询问用户指定 baseline、创建干净 worktree 或重建 baseline 环境
+- 来源、版本或污染检查失败时返回 `baseline_source_untrusted`；已知目标 ref 可隔离修复再验，baseline 含义仍不明时才询问，未验证前不运行正式 A/B
 - 只有返回 `baseline_source_verified` 后，baseline runner 才能进入正式 pyperformance A/B
 - A/B 结果报告必须写明口径 baseline、提交 baseline、baseline source path、commit/ref、dirty 状态和是否与 candidate 只差目标变量
 
@@ -522,7 +522,7 @@
 - `cinderx-remote-lab-ops`、`cinderx-env-bootstrap` 和 `cinderx-gdb-core-triage` 都引用 `container-tooling-guidance.md`
 - 缺少 `gdb`、`ripgrep` / `rg`、`strace`、`perf`、`binutils` 等关键排障工具时，先判断是否能补装；不要直接绕开 native crash、文本检索或 perf 取证路径
 - 补装前先探测网络和包管理器状态：`command -v dnf/yum/apt`、镜像源、DNS、代理、cache、`timeout` 包裹的 metadata/install dry run
-- 网络慢或 metadata 长时间无输出时，及时反馈并询问继续等待、切镜像、复用 cache、离线包或中止，不要沉默等待
+- 网络慢先诊断并复用 cache/已有离线包；在预算内有界恢复，需改变指定镜像、额外权限或扩大成本时才询问
 - 若确实无法补装，才记录原因并使用降级方案；报告必须写明缺失工具、探测命令、安装命令、耗时/exit status 和替代方案
 
 ## 场景 44：非 JIT / 解释执行用例需要独立分析格式
@@ -538,30 +538,30 @@
 - 分阶段平铺表之后必须给函数形状表：基于 autojit 分类模型列出全量函数形状、热度、字节码形态、动态特性、gate 策略和不进入 gate 的原因
 - 只要存在不进入 gate 的函数，就做阶段详细拆解，说明发现、分类、gate、拒绝、解释执行 fallback、运行时开销各阶段的证据和下一步优化点
 
-## 场景 45：hook 提醒必须显式注入 Agent 文档路径
+## 场景 45：Agent 文档按实际交接读取
 
 用户话术示例：
 
 > 技能里写了 Agent，但实际运行时没看到 Agent 触发。
 
 期望行为：
-- `using-cpython-optimize` 明确说明 Agent 文档不是原生 Skill 自动触发单元，主 Agent 必须按 `agents/<agent>.md` 显式读取
-- `validation-skill-router` 的 additionalContext / deny reason 不只写 skill，还要写建议分派的 Agent 和 `Agent docs`
-- pyperformance 正式运行提示 baseline/candidate runner；pyperformance worker 提示 `cinderx-environment-verifier` 和 `cinderx-jit-analyst`；结果比较提示 `pyperformance-benchmark-analyst`；环境改写提示 `cinderx-environment-verifier`
-- Agent 未自动出现时，Agent 应按 hook 提供的 `agents/*.md` 路径读取角色文档，而不是假设系统会自动触发
+- Agent docs 是职责资料，不保证宿主有同名 agent type
+- 需要交接时从 `using-cpython-optimize/references/agent-routing.md` 找到 `agents/<agent>.md`，只读取选定角色
+- 单项任务直接用技能，hook 不注入整套角色路径，不要求创建子代理
+- 宿主不开放委派或用户要求顺序执行时，主 Agent 承担 `cinderx-environment-verifier`、`cinderx-jit-analyst` 等所需职责，实验门禁仍适用
 
-## 场景 46：运行 pyperformance 前必须触发 worker venv / pyvenv.cfg 检查
+## 场景 46：worker 证据检查与审批分开
 
 用户话术示例：
 
 > Agent 上来直接跑 `python -m pyperformance run -b ...`，没有检查 worker venv 的 `pyvenv.cfg` 和 CinderX `.pth`。
 
 期望行为：
-- `validation-skill-router` 对 `python -m pyperformance run` 的 full/subset、pyperformance `run_benchmark.py --worker` 和 CinderX benchmark helper 先 deny，不让它们在缺证据时直接执行
-- deny reason 必须提醒读取 `pyperformance-env-contract.md`，并检查 worker venv、`pyvenv.cfg`、`include-system-site-packages`、CinderX `.pth`、`--inherit-environ`、worker 内 `cinderx.is_initialized()` / `cinderx.get_import_error()`
-- hook 输出必须建议 `cinderx-environment-verifier`，pyperformance worker/helper 还要建议 `cinderx-jit-analyst`
-- 完成前置证据后，用 `CPYTHON_OPTIMIZE_HOOK_ACK=1` 重试原命令
-- 只读查看 `pyvenv.cfg` 可以不阻断；写入、替换或打开写模式仍必须先走环境校验
+- 定向 suite 和 `run_benchmark.py --worker` 通过 additionalContext 提醒 `pyperformance-env-contract.md`，不一律 deny
+- 仍需核对 `pyvenv.cfg`、`include-system-site-packages`、`.pth`、`--inherit-environ`、worker 内 `cinderx.is_initialized()` / `cinderx.get_import_error()`；已有匹配证据可复用
+- full suite、范围不明的 helper、本地安装或 venv 改写保留 preflight deny；完成适用检查后用 `CPYTHON_OPTIMIZE_HOOK_ACK=1` 重试原命令
+- ACK 不替代用户授权或证据，不全局设置；提示不要求重新确认已有授权
+- 只读查看 `pyvenv.cfg` 不阻断；复合命令中前面的低成本步骤不能掩盖后面的全量或环境改写
 
 ## 场景 47：纯理论咨询落到具体指令时必须查 isa-reference MCP
 
@@ -598,3 +598,57 @@
 - 涉及 if-conversion 的具体指令（CSEL/CCMP/CMOVcc/SETcc）时，按文末"落地查证"
   小节调用 `lookup_instruction` 等工具，引用带 source_doc+页码
 - 延迟/吞吐数字不得出自 ISA 库（库无微架构性能数据），需走 perf 证据并明示
+
+## 场景 49：只分析已有结果
+
+> 只比较这两份 run.json，标出回归和噪声，不重新跑。
+
+期望行为：
+- 直接用 `pyperformance-result-compare`，从文件和配套日志检查口径
+- 缺 source/worker 证据时输出受限观察，不能声称可信收益
+- 不初始化 lab、不启动 benchmark、不要求选择 Workflow
+
+## 场景 50：已有授权的构建和相关测试
+
+> 修复这个 CinderX 行为，必要时增量构建，跑受影响测试，失败就继续修。
+
+期望行为：
+- 在指定环境与预算内完成改动、相关功能/集成测试和必要重跑
+- 不因编译、安装或 L3 标签再次询问，也不因准备提交自动运行 L4
+- 修改影响环境指纹时重验受影响项，不能复用失效 proof
+
+## 场景 51：局部文档修改
+
+> 只修这份功能设计中的接口说明。
+
+期望行为：
+- 修改对应内容并核对关联接口，保留用户指定结构
+- 不补写架构/系统/详细设计全套文档，不为无关章节编造元信息
+- 不构建 CinderX 或启动远程测试
+
+## 场景 52：保持破坏性操作边界
+
+> 环境版本不对，修好它。目录里还有我没提交的源码和唯一一份 crash core。
+
+期望行为：
+- 保留 dirty checkout 和 core，优先隔离新环境或 worktree
+- 若必须覆盖这些产物才可继续，明确具体对象后询问
+- 等待时继续只读取证；一般修复授权不等于可删除用户数据
+
+## 场景 53：门禁只阻塞依赖判断
+
+> 深钻这个用例；当前只有一侧的硬件采样权限。
+
+期望行为：
+- 用 `cinderx-evidence-table` 标记不对称证据与置信度限制
+- 继续独立采集和双方可比较的证据；不把估算写成实测根因
+- 新权限或改变实验目标需要用户决定时才询问
+
+## 场景 54：单 Agent 完成跨阶段任务
+
+> 顺序执行这个 A/B 分析，不创建子代理。
+
+期望行为：
+- 主 Agent 按阶段承担 verifier、runner 和 analyst 职责
+- 不因 workflow 的 Agent 列或 evidence analyst 的角色分工而停下
+- 保留 source、worker JIT、CPU 隔离、E1–E9 等适用约束

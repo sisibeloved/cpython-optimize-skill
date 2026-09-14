@@ -21,9 +21,9 @@
 
 ## 反问 Gate
 
-- candidate patch、commit、editable install 或 CinderX flags 有多个候选时，询问选择。
-- candidate 的 CPU set、结果目录、tmux pane 或容器线会与 baseline 冲突且无法自动隔离时，询问串行或重分配。
-- candidate smoke 失败、crash 或异常慢时，询问是否转入 crash/JIT 分支还是中止性能验证。
+- candidate patch、commit 或 flags 查证后仍存在不同实验含义时，询问比较对象。
+- 优先新建结果目录与独立 slot；CPU 不足时串行执行。无法隔离且会影响其他任务时才询问。
+- smoke 失败或 crash 时保留现场并进入对应诊断；在已有修复授权内继续处理。功能未通过不能输出可提交性能收益。
 
 ## 输出要求
 

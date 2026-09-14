@@ -1,11 +1,13 @@
 ---
 name: workflow-cross-platform-delta-triage
-description: Use when 同一 pyperformance 用例在两个平台上有明显差距，需要排除 CinderX 环境漂移、定位 ISA/微架构根因并验证优化收益。
+description: Use when 已测出同一 benchmark 的双平台差距，需要排除环境漂移、归因并验证优化收益。
 ---
 
 # Cross Platform Delta Triage Workflow
 
 ## Agent 分派
+
+下表按当前证据选择所需阶段，已有匹配产物可复用；Agent 列是职责，可由主 Agent 顺序承担，仅在宿主允许且有独立工作时委派。
 
 | 阶段 | Agent | 技能 |
 |------|-------|------|

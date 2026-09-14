@@ -1,6 +1,6 @@
 ---
 name: cinderx-ab-run-slot
-description: Use when CPython/CinderX A/B 性能验证需要分配 baseline/candidate 的容器、工作目录、CPU affinity、绑核、结果目录，并确认可并行运行。
+description: Use when 为 CPython/CinderX A/B 实验分配 CPU、容器和结果目录，判断能否并行。
 ---
 
 # CinderX A/B Run Slot
@@ -33,11 +33,10 @@ description: Use when CPython/CinderX A/B 性能验证需要分配 baseline/cand
 
 ## 反问 Gate
 
-- baseline/candidate 的唯一差异轴不明确时，询问要比较的变量。
-- baseline source 不是 `baseline_source_verified` 时，询问用户指定 baseline、创建干净 worktree 或重建 `cpython-baseline`。
-- CPU set、tmux pane、结果目录或容器线无法安全分离时，询问串行执行还是重新分配资源。
-- 用户给出的真实命令 affinity 在当前环境不可用，且无法自动映射出可比 CPU set 时，询问是否接受重映射或换环境。
-- 用户要求并行但环境 verifier 未确认可并行时，询问是否先做环境审计。
+- baseline/candidate 的比较对象或唯一差异轴查证后仍不明确时，询问。
+- source 未验证时先补证据；已知 ref 可隔离为干净 worktree，只有 baseline 含义不明或修复会覆盖用户产物时才询问。
+- CPU set 无法并行隔离时默认串行，使用同一实际 affinity；若用户明确要求并行或固定核号，说明冲突后询问。
+- tmux pane、build dir、结果目录可安全新建时直接隔离；不必询问是否先审计资源。
 
 ## 输出
 

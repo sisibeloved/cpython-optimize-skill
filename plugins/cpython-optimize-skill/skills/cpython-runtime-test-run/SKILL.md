@@ -1,6 +1,6 @@
 ---
 name: cpython-runtime-test-run
-description: Use when CPython/CinderX 需要运行 RuntimeTests 功能测试、test_cinderx/lib test 集成测试、相关子集、失败重跑或近千条全量验证。
+description: Use when 运行或重跑 CinderX RuntimeTests 功能测试、test_cinderx/lib test 集成测试。
 ---
 
 # CPython Runtime Test Run
@@ -17,7 +17,7 @@ description: Use when CPython/CinderX 需要运行 RuntimeTests 功能测试、t
 
 - L1 smoke：`import cinderx`、最小 JIT、目标单元测试、目标功能测试。
 - L3 相关子集：受影响 RuntimeTests 功能测试、test_cinderx/lib test 集成测试、失败用例集合。
-- L4 全量：近千条 CPython Runtime / CinderX 聚合测试，提交或报告前使用。
+- L4 全量：近千条 CPython Runtime / CinderX 聚合测试，按明确请求或广泛行为风险选择。
 
 ## 命令形态
 
@@ -28,7 +28,7 @@ description: Use when CPython/CinderX 需要运行 RuntimeTests 功能测试、t
 ## 规则
 
 - L1 未过，不讨论性能收益。
-- 失败重跑必须复用原命令、环境变量、日志路径和 exit status。
+- 失败重跑保持可比命令和环境变量，使用新的日志路径并记录 exit status，避免覆盖首次失败证据。
 - `SIGSEGV` / `exit 139` 转 `cinderx-gdb-core-triage`。
 - AArch64 上出现 `DetectsThreadStateOffset` 失败、`tstate_offset = -1`、`_PyThreadState_GetCurrent@plt` 或 `TLSDESC` 时，先转 `cinderx-env-validate` / `cinderx-env-bootstrap` 检查 `/opt/python314` 是否错误构建为共享/PIC Python；不要先归因到 AutoJIT 新代码。
 - 测试前后记录 Python、CinderX commit、容器线和 JIT flags。

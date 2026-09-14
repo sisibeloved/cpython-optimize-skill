@@ -1,6 +1,6 @@
 ---
 name: cinderx-evidence-table
-description: Use when 需要为单个用例建立从性能数据到根因的完整证据表，定义 E1–E9 三段式结构、每步必贴证据与闭环判据，并规定 ISA/指令集/微架构/硬件层的工具证据和 SPE/IBS 采样可用性探测原则。
+description: Use when 建立或审查单用例 E1–E9 根因证据表，判定穿刺与优化价值是否可信。
 ---
 
 # CinderX Evidence Table

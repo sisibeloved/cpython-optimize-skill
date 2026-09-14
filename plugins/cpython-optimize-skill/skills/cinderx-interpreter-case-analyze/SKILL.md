@@ -1,6 +1,6 @@
 ---
 name: cinderx-interpreter-case-analyze
-description: Use when pyperformance benchmark 未进入 CinderX JIT gate、主要解释执行、非 JIT 用例，或需要用穿刺证据、阶段表和函数形状表解释 CPython JIT baseline 与 CinderX JIT 差距。
+description: Use when benchmark 未进入 CinderX JIT，需要分析解释执行阶段、函数形状和 gate 策略。
 ---
 
 # CinderX Interpreter Case Analyze

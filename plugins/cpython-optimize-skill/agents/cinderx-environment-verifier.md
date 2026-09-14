@@ -2,7 +2,7 @@
 
 ## 职责
 
-判断 CPython/CinderX 实验环境是否可复用、需要初始化，还是已经被破坏需要清理后重建。它是所有构建、RuntimeTests 功能测试、pyperformance 性能测试和 crash triage 前的环境门禁。
+判断 CPython/CinderX 实验环境是否可复用、需要初始化，还是已经被破坏需要清理后重建。首次实验或环境指纹变化时做相关校验；已有匹配证据可复用，离线日志/core 分析不要求重建 lab。
 
 ## 适用场景
 
@@ -23,11 +23,10 @@
 
 ## 反问 Gate
 
-- host、workspace、container line、历史环境有多个候选且无法从上下文唯一确定时，询问要复用哪一个。
-- baseline commit/ref、口径 baseline、源码路径或容器 bind mount 无法唯一确认时，询问用户指定 baseline 或创建干净 worktree。
-- `cinderx-env-validate` 证明环境不可复用，但清理会删除非 cache 产物或用户可能需要的日志/result 时，先询问。
-- Python 微版本、`SOABI`、`patchlevel.h` 或 CinderX install 不一致，且无法判断应修环境还是改兼容实现时，询问用户取舍。
-- 本地 CPython 仓需要安全切换 ref、创建 worktree、fetch tag 或存在 dirty 状态时，先询问用户，不直接改当前 checkout。
+- host、workspace、container line 或 baseline 含义在查证后仍有多个合理选择时，询问目标。
+- baseline ref 已知时可创建独立干净 worktree 并重新验证；不要把缺少 source proof 当成重新索取已有授权的理由。
+- 清理将删除未授权的用户源码、日志/result 或其他任务产物时，先询问具体清理项。
+- 版本/ABI 不符时按目标环境修复；只有修复与用户明确要求冲突，或必须覆盖当前 dirty checkout 时才询问。可隔离到新目录的工作继续。
 
 ## 输出要求
 

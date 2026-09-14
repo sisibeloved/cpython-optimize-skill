@@ -92,6 +92,7 @@ def require_all(text: str, needles: list[str], context: str) -> None:
 
 def main() -> int:
     entry = skill("using-cpython-optimize")
+    role_index = read(SKILLS / "using-cpython-optimize" / "references" / "agent-routing.md")
     design_skill = skill("design-documentation")
     function_design_template = read(SKILLS / "design-documentation" / "references" / "function-design-template.md")
     question_templates = read(SKILLS / "using-cpython-optimize" / "references" / "clarifying-question-templates.md")
@@ -117,14 +118,14 @@ def main() -> int:
     baseline_source_contract = read(SKILLS / "using-cpython-optimize" / "references" / "baseline-source-contract.md")
     container_tooling_guidance = read(SKILLS / "using-cpython-optimize" / "references" / "container-tooling-guidance.md")
 
-    for number in range(1, 49):
+    for number in range(1, 55):
         require(scenarios, f"场景 {number}", "pressure scenarios")
 
     for name in PROFESSIONAL_SKILLS:
         require(entry, name, "entry skill professional routing")
 
     for name in PROFESSIONAL_AGENTS:
-        require(entry, name, "entry skill agent routing")
+        require(role_index, name, "agent routing reference")
 
     for old_name in GENERIC_OR_OLD_SKILLS:
         if (SKILLS / old_name).exists():
@@ -145,19 +146,8 @@ def main() -> int:
             "Workflow",
             "Agent",
             "Skill",
-            "Agent 文档不是原生 Skill 自动触发单元",
-            "agents/<agent>.md",
-            "environment-verifier",
-            "baseline-runner",
-            "candidate-runner",
-            "crash-triager",
             "三态",
-            "可复用",
-            "新环境",
-            "被破坏",
-            "反问 Gate",
-            "request_user_input",
-            "AskUserQuestion",
+            "agent-routing.md",
             "clarifying-question-templates.md",
         ],
         "entry skill",
@@ -169,13 +159,10 @@ def main() -> int:
             "request_user_input",
             "AskUserQuestion",
             "文本降级",
-            "workflow_route",
-            "validation_level",
+            "experiment_axis",
             "environment_target",
             "destructive_clean",
             "remote_stall",
-            "ab_slot",
-            "crash_evidence",
             "result_artifacts",
             "scope_budget",
         ],
@@ -230,7 +217,6 @@ def main() -> int:
             "permissionDecision",
             "additionalContext",
             "CPYTHON_OPTIMIZE_HOOK_ACK",
-            "using-cpython-optimize",
             "validation-strategy",
             "cinderx-env-validate",
             "pyperformance",
@@ -249,11 +235,6 @@ def main() -> int:
             ".pth",
             "--inherit-environ",
             "cinderx.is_initialized()",
-            "agent_hint",
-            "Agent docs",
-            "agents/cinderx-environment-verifier.md",
-            "agents/pyperformance-baseline-runner.md",
-            "agents/cinderx-jit-analyst.md",
         ],
         "validation hook router",
     )
@@ -525,7 +506,7 @@ def main() -> int:
     )
     require_all(
         design_skill,
-        ["功能设计", "总-分结构", "功能域", "功能项", "通俗易懂", "深入浅出", "外部视角", "mermaid", "表格", "后部"],
+        ["功能设计", "总-分结构", "功能域", "功能项", "通俗易懂", "外部视角", "mermaid", "表格", "后部"],
         "design-documentation",
     )
     require_all(

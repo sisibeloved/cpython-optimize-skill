@@ -1,6 +1,6 @@
 ---
 name: cinderx-hir-dump
-description: Use when 需要在真实 pyperformance worker 命令上叠加 PYTHONJITDUMPFINALHIR、PYTHONJITLOGFILE、jit.log 或 HIR dump 证据。
+description: Use when 在真实 pyperformance worker 上采集 CinderX HIR 或 jit.log。
 ---
 
 # CinderX HIR Dump

@@ -1,6 +1,6 @@
 ---
 name: cinderx-jit-review
-description: Use when reviewing CinderX JIT pull requests, merge requests, or patches for correctness risks, validation gaps, RuntimeTests/test_cinderx/test_kunpeng coverage, exact review comment placement, or correctness-contract evidence around bytecode builder, preload, HIR, LIR, codegen, runtime helpers, deopt, FrameState, refcount, adaptive/specialized opcodes, may-raise behavior, helper fallback, side-effect order, or AArch64 backend semantics.
+description: Use when 审查 CinderX JIT PR/MR 或补丁的语义正确性、测试证据和评论位置。
 ---
 
 # CinderX JIT Review
@@ -11,14 +11,14 @@ description: Use when reviewing CinderX JIT pull requests, merge requests, or pa
 
 这个 skill 不是性能调优流程。性能收益只能作为背景；review 结论先回答“这次 JIT 改动如何证明没有改坏语义”。
 
-## 必读材料
+## 按风险读取
 
-每次完整 review 前读取：
+先看 diff 和相关调用链，再读取适用材料：
 
 - `references/jit-correctness-validation-strategy.md`：分层正确性策略、may-raise / exception table、RuntimeTests 硬要求。
 - `references/review-checklists.md`：按风险类型检查 helper、deopt、refcount、adaptive opcode、side effect、AArch64 codegen 和覆盖证据。
 
-如果只回答一个局部问题，也至少读取对应 reference 中的相关小节；不要只凭通用 C++ 或 Python 经验下结论。
+局部问题只读取对应小节；不涉及 JIT 行为的文档或工具改动不要求通读两份材料。
 
 ## 开放性原则
 
@@ -49,7 +49,7 @@ description: Use when reviewing CinderX JIT pull requests, merge requests, or pa
    - 前提失效时如何 fallback、deopt 或回到解释器语义？
    - 哪些机器检查证明 fast path 命中、fallback 正确、JIT on/off 等价？
 
-4. 按风险 checklist 做第二遍 review。
+4. 对照适用风险检查证据缺口，不要求重读整个 diff。
    - `may-raise` 点是否被新增、删除、移动、合并或替换？
    - 是否消费 CPython adaptive / specialized opcode 或 inline cache？
    - 是否改变 helper call、side-effect 顺序、container mutation、attribute access、descriptor 行为？
@@ -60,13 +60,13 @@ description: Use when reviewing CinderX JIT pull requests, merge requests, or pa
    - JIT 行为改动通常必须有 `RuntimeTests` 机器检查；`test_cinderx`、pyperformance、microbenchmark 不能替代局部 lowering/pass/codegen 契约。
    - `test_cinderx` 证明系统级 Python 行为，不能单独证明 HIR/LIR/codegen fast path 命中。
    - `test_kunpeng` 用于 ARM64/openEuler 相关路径时，检查是否覆盖目标 specialized opcode、helper、AArch64 或 platform-sensitive 行为。
-   - 纯文档、注释、测试工具或不改变 JIT 行为的重构可以没有 RuntimeTests，但 PR 说明应显式解释。
+   - 纯文档、注释或不改变 JIT 行为的测试工具改动使用相应检查，不因此要求新增 RuntimeTests；重构按实际行为风险验证。
 
 6. 输出 review findings。
    - Findings 必须排在最前面，按严重度排序。
    - 每条 finding 必须包含 severity、文件/行号、风险、缺失证据或建议修复。
    - 用户问“在哪评论”时，先给 exact file/line placement 和 P1/P2，再给解释。
-   - 如果没有 blocker，也要说明剩余验证缺口和你没有覆盖的风险面。
+   - 没有 finding 时直接说明，并只列与结论相关的实际验证限制。
 
 ## Severity 口径
 

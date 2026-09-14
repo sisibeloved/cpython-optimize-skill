@@ -1,6 +1,6 @@
 ---
 name: pyperformance-suite-run
-description: Use when 需要正式运行 python -m pyperformance run，生成 subset/full 的 run.json，配置 warmup、loops、affinity 或 L3/L4 性能验证。
+description: Use when 正式运行 pyperformance 子集或全量并生成 run.json；单 worker 调试用 pyperformance-worker-run。
 ---
 
 # pyperformance Suite Run
@@ -33,8 +33,8 @@ description: Use when 需要正式运行 python -m pyperformance run，生成 su
 - 不能在未完成前置证据时提前加 `CPYTHON_OPTIMIZE_HOOK_ACK=1` 绕过 hook；ACK 只表示已经完成环境契约检查。
 - 记录 warmup、loops、CPU affinity、容器线、Python、CinderX commit。
 - 正式数据关闭 HIR/JIT dump、`--debug-single-value` 和临时诊断变量；这些只用于 L2 调试，不进入正式性能结论。
-- subset/full 选择必须来自 `validation-strategy` 的晋级理由。
-- 文档和报告只写 `<benchmark-selector>`、`<result.json>`、`<baseline.json>`、`<candidate.json>` 等占位，不硬编码具体 pyperformance 用例名或文件名。
+- subset/full 根据用户范围、受影响用例和已有证据选择；需扩大验证时再参考 `validation-strategy`。
+- 可复用示例使用占位符；实际命令和报告记录真实 benchmark、参数与结果路径。
 
 ## 命令形态
 
@@ -49,7 +49,7 @@ description: Use when 需要正式运行 python -m pyperformance run，生成 su
   -o <result.json>
 ```
 
-全量性能测试：去掉 `-b <benchmark-selector>`，但必须先经过 `validation-strategy` 授权 L4。
+全量性能测试：去掉 `-b <benchmark-selector>`，在用户已要求 full 或预算覆盖时执行；否则按 `validation-strategy` 先明确是否需要扩大范围。
 
 性能对比：
 
@@ -68,9 +68,7 @@ description: Use when 需要正式运行 python -m pyperformance run，生成 su
 
 ## 反问 Gate
 
-- 用户未明确授权 L4 full 或预计接近三小时的全量 pyperformance 时，询问是否降级到目标 benchmark/相关子集。
-- benchmark subset、warmup、loops、CPU affinity 或正式/调试口径缺失时，询问。
-- 可用 CPU 不足以满足用户要求的并行 A/B 隔离或正式口径时，询问串行执行、降低验证等级或更换环境。
-- 当前环境仍有 HIR/JIT dump 等调试变量，且用户目标是正式性能数据时，询问是否切换口径。
-
-输出 `run.json` 路径、命令、原始/实际 `--affinity`、可用 CPU 证据、`--inherit-environ` 列表、driver/worker 环境差异、`.pth` / venv / worker JIT 证据、环境指纹和异常 benchmark 列表。
+- 全量运行不在用户请求内，且预计显著增加成本时，说明子集方案并询问；已明确要求 full 时不重复确认。
+- benchmark、baseline 含义或正式/调试目标查证后仍不明时询问。warmup、loops 沿用可比口径或工具默认值并记录，不要求用户选择内部参数。
+- 可用 CPU 不足时默认串行并保持同一实际 affinity；无法满足用户明确固定的口径时再询问。
+- 正式运行在命令局部关闭 HIR/JIT dump 和临时诊断变量，保留诊断产物，不为此再次索取授权。

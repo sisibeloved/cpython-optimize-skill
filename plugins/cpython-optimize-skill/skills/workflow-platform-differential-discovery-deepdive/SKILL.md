@@ -1,6 +1,6 @@
 ---
 name: workflow-platform-differential-discovery-deepdive
-description: Use when 需要深钻单个用例，从性能数据一路追到 ISA/微架构/硬件根因，建立完整证据表并产出可信备选优化项。与 matrix-first 粗筛 workflow 并行，按用例深钻而非按矩阵广覆盖。
+description: Use when 深钻已选定的单个用例，贯通性能、JIT、ISA/微架构证据并验证优化价值。
 ---
 
 # Platform Differential Discovery Deepdive Workflow
@@ -10,6 +10,8 @@ description: Use when 需要深钻单个用例，从性能数据一路追到 ISA
 按用例深钻的端到端剧本。输入是单个用例（来自粗筛 `workflow-platform-differential-discovery` 的候选用例清单，或用户直指），产物是单用例证据表 + 备选优化项。与粗筛 workflow 是流水线关系但相互独立——用户也可跳过粗筛直接指一个用例深钻。
 
 ## Agent 分派
+
+下表按当前证据选择所需阶段，已有匹配产物可复用；Agent 列是职责，可由主 Agent 顺序承担，仅在宿主允许且有独立工作时委派。
 
 | 阶段 | 对应用户流程步骤 | Agent | 技能 | Gate |
 |------|-----------------|-------|------|------|
@@ -28,10 +30,10 @@ description: Use when 需要深钻单个用例，从性能数据一路追到 ISA
 
 ## Gate
 
-E1–E5 是证据采集（贴事实），E6–E9 是收口判读（下判断），分界线在 E6。任一阶段 Gate 不满足，**停在该阶段补证据**，不往后走：
+E1–E5 是证据采集（贴事实），E6–E9 是收口判读（下判断），分界线在 E6。阶段 Gate 不满足时，补齐证据再作依赖它的判断；独立证据可继续采集，不因缺口暂停整个任务：
 
 - evidence-analyst 在 E6 接手时拿到 E1–E5 证据，填入证据表前 5 段（或标记 `evidence_gap` 要求补），再推进 E6–E9。
 - evidence-analyst 在 E6 有权回退要求 E3–E5 补证据（如指令没对齐回到 E5）。
-- E8 拆两半：穿刺跑分（orchestrator + candidate-runner）与穿刺判读（evidence-analyst）分离，判读权归 evidence-analyst。
+- E8 分别记录穿刺跑分与可信度判读；可以由同一 Agent 顺序完成，但不能用已执行跑分替代隔离、可重复性和噪声判断。
 
 有了足够深层的根因（E6），才不被表面原因迷惑；有了优化方向（E7），才进入穿刺（E8）；穿刺数据可信，才判定优化价值（E9），产出最终备选优化项。

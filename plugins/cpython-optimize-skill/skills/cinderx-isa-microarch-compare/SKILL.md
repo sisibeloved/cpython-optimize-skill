@@ -1,6 +1,6 @@
 ---
 name: cinderx-isa-microarch-compare
-description: Use when 需要比较 Kunpeng/x86、Arm/x86 的 ISA、微架构、perf、cache、分支预测、SIMD、barrier、hugepages 或 codegen lowering 差异。
+description: Use when 对 CinderX 的 Arm/x86 性能差异做 ISA、微架构与 perf 归因。
 ---
 
 # CinderX ISA/Microarch Compare
@@ -17,9 +17,9 @@ description: Use when 需要比较 Kunpeng/x86、Arm/x86 的 ISA、微架构、p
 
 ## 反问 Gate
 
-- 平台对、CPU 型号、benchmark 集合或性能口径无法唯一确定时，询问用户。
-- perf/硬件计数器/CPU governor/hugepages 需要权限或会改变环境时，询问。
-- 系统性扫描范围超过当前预算时，询问先做 L0/L2 子集还是进入 L3/L4。
+- 平台对、benchmark 目标或性能口径查证后仍无法确定时询问；CPU 型号和可用 perf 能力先探测。
+- 新增权限或改变共享环境的 CPU governor/hugepages 等配置，需在用户授权范围内。
+- 系统扫描超出预算时询问扩大范围；现有数据分析和低成本子集继续。
 
 ## 输出
 

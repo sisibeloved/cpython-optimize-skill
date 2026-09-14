@@ -1,6 +1,6 @@
 ---
 name: cinderx-remote-lab-ops
-description: Use when CPython/CinderX lab 在远端机器上，需要 SSH、tmux、rsync、docker compose、日志路径、stdout/stderr、exit status、timeout 或长任务输出契约。
+description: Use when 通过 SSH/tmux/rsync/docker compose 操作远程 CPython/CinderX lab，或诊断远端卡顿。
 ---
 
 # CinderX Remote Lab Ops
@@ -31,13 +31,13 @@ exit "$status"
 - 无输出：查进程、tmux capture-pane、日志、CPU/IO/磁盘。
 - 网络慢：查 DNS、代理、pip mirror、git 连接和 cache。
 - 容器内缺少 `gdb`、`rg` / `ripgrep`、`strace`、`perf`、`binutils` 等排障工具时，先读取 `../using-cpython-optimize/references/container-tooling-guidance.md`，探测网络、包管理器、镜像源和 cache，再决定补装；不要直接绕开关键取证路径。
-- 不确定是否继续等待时，询问用户。
+- 在原预算内执行有界诊断和恢复；只有新的资源或权限取舍无法确定时询问用户。
 
 不要为了补输出盲目重复构建、安装或 benchmark。
 
 ## 反问 Gate
 
-- 远端命令长时间无新增输出，且进程/日志无法证明正常推进时，询问继续等待、查看交互终端、中止还是换策略。
-- pip/git/网络下载异常慢时，询问继续等待、切镜像、复用 cache 或让用户处理网络。
-- 补装工具的 metadata refresh 或安装长时间无输出时，及时反馈并询问继续等待、切镜像、复用 cache、上传离线包或中止。
-- 要 kill 进程、清理目录、重跑有副作用命令或覆盖日志时，先询问。
+- 正常推进的任务沿用已知预算和 timeout/进度策略；没有新证据时不重复启动。
+- 卡顿先查进程、tmux、日志、exit status、DNS/代理/镜像源/cache，并尝试授权范围内可逆恢复。
+- 只有需改变明确指定的网络方案、超出预算、终止其他任务、覆盖日志或执行未授权的有副作用重跑时才询问。
+- 恢复失败时报告已查证的阻塞点、可用产物和最小下一步；继续独立的只读工作。

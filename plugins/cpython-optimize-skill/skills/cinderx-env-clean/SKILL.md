@@ -1,6 +1,6 @@
 ---
 name: cinderx-env-clean
-description: Use when CPython/CinderX lab 已存在但被污染、版本漂移、CinderX 导入异常、错误 editable install、错版本头文件、坏容器或 pyperformance env 残留。
+description: Use when 已证实 CPython/CinderX lab 污染，需要清理错误安装或构建环境。
 ---
 
 # CinderX Env Clean
@@ -22,9 +22,9 @@ description: Use when CPython/CinderX lab 已存在但被污染、版本漂移�
 
 ## 反问 Gate
 
-- 清理会删除非 cache 产物、历史日志、`run.json`、core dump、HIR/jit.log 或用户工作目录时，必须询问。
-- 同一 host/workspace 下有多个可疑环境且无法确认目标环境时，询问要清理哪一个。
-- 无法判断应清理重建还是保留现场继续取证时，询问用户优先级。
+- 先定位被污染的对象。目标仍不明确，或清理会删除未获授权的源码、历史日志、`run.json`、core、HIR/jit.log 时，询问具体对象。
+- 可证明由当前任务生成且可重建的污染项，按已有清理/修复授权处理；不因进入清理阶段重复询问。
+- 原因未查明且仍需现场时保留现场，继续只读取证。
 
 ## 输出
 

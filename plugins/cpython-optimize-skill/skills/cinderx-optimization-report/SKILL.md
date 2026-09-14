@@ -1,6 +1,6 @@
 ---
 name: cinderx-optimization-report
-description: Use when CPython/CinderX 优化、crash、pyperformance 回归或平台差异分析需要沉淀环境指纹、证据链、根因、patch 和回归结果。
+description: Use when 将 CPython/CinderX 实验的环境、证据链、根因和回归结果整理成报告。
 ---
 
 # CinderX Optimization Report

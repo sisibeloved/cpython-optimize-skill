@@ -1,6 +1,6 @@
 ---
 name: compiler-optimization-theory
-description: Use when 分析 CinderX JIT/codegen 优化原理、HIR/LIR 设计取舍、指令调度或寄存器分配策略，需要编译器理论背景（IR、数据流分析、优化 pass、调度、分配）支撑判断时。原理性问题先读这里再下结论，不凭直觉断言；理论落到具体指令选型、编码或平台事实时必须调 isa-instruction-lookup 的 MCP 查证。
+description: Use when 解释或评估 CinderX 的 IR、优化 pass、指令调度与寄存器分配原理；指令规格用 isa-instruction-lookup。
 ---
 
 # Compiler Optimization Theory

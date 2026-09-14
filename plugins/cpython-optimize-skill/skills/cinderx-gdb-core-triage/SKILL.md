@@ -1,6 +1,6 @@
 ---
 name: cinderx-gdb-core-triage
-description: Use when CPython/CinderX 或 pyperformance worker 出现 SIGSEGV、exit 139、core dump、SIGABRT、native assertion，需要 gdb bt full 和 core 证据。
+description: Use when CPython/CinderX native crash 需要真实命令、core 和 gdb 栈取证。
 ---
 
 # CinderX GDB/Core Triage
@@ -29,10 +29,10 @@ description: Use when CPython/CinderX 或 pyperformance worker 出现 SIGSEGV、
 
 ## 反问 Gate
 
-- 缺真实复现命令、core 路径或 Python binary，且无法从日志恢复时，询问用户提供或授权重跑。
-- 多个 core、多个容器线或多个解释器可能匹配同一 crash 时，询问要绑定哪一组证据。
-- 补装 `gdb` / `strace` / `perf` 等工具时网络慢、metadata 长时间无输出或需要切镜像/离线包时，询问继续等待、切镜像、复用 cache、上传离线包或中止。
-- 需要 attach live process、保留现场或执行可能改变现场的清理/重跑时，先询问。
+- 真实命令、core 与 Python binary 先从日志、路径、时间和构建信息匹配；仍无法确定时询问缺失事实。
+- 已授权复现/修复时可在隔离环境重跑并定向取证，保留原 core 与日志。
+- 缺工具按 tooling 指南探测与补装；只有需额外权限、改变指定网络方案或超过预算时才询问。
+- attach 会暂停其他任务或操作会破坏唯一现场时，确认具体动作的授权；离线分析继续。
 
 ## 输出
 

@@ -320,7 +320,7 @@ if has_signal \
     'SIGABRT' \
     'Aborted[[:space:]]*\(core dumped\)'
 then
-    emit_context "检测到 CPython/CinderX native crash 信号（SIGSEGV / exit 139 / core dump）。请加载 workflow-cinderx-crash-triage、cinderx-crash-triager、cinderx-gdb-core-triage 和 cinderx-remote-lab-ops，并按 validation-strategy 选择最低足够验证等级；先保留真实复现命令、stdout/stderr、exit status 和 core，再用 gdb bt full 定位，JIT 相关再补 cinderx-hir-dump / jit.log。日志不能替代 gdb/core/HIR 证据链。"
+    emit_context "检测到 native crash（SIGSEGV / exit 139 / core dump）。使用 cinderx-gdb-core-triage：保留真实命令、stdout/stderr、exit status 和 core，采集 gdb bt full；JIT 相关再补 HIR/jit.log。需端到端复现时再用 workflow-cinderx-crash-triage，按 validation-strategy 控制补测范围。"
     exit 0
 fi
 
@@ -338,7 +338,7 @@ if has_signal \
     'TLS handshake timeout' \
     'pip.*Retrying'
 then
-    emit_context "检测到 CPython/CinderX 远端 lab 网络/下载异常耗时或 timeout 信号。请加载 cinderx-remote-lab-ops，必要时再进入 workflow-remote-cinderx-lab-setup；先检查进程、日志、exit status、DNS/代理/镜像源/缓存，给命令加 timeout 或复用已有 tmux/日志输出。无法判断是否继续等待时要询问用户。"
+    emit_context "检测到远端 lab 网络/下载异常或 timeout。按需用 cinderx-remote-lab-ops，先查进程、日志、exit status、DNS/代理/镜像源/cache，在已有预算内诊断和恢复；需要新增权限、改变指定方案或超出预算时再询问。"
     exit 0
 fi
 
@@ -346,7 +346,7 @@ if [ -n "$duration_ms" ] && [ "$duration_ms" -ge 120000 ]; then
     if printf '%s' "$payload" | grep -Eq '"stdout"[[:space:]]*:[[:space:]]*""' \
         && printf '%s' "$payload" | grep -Eq '"stderr"[[:space:]]*:[[:space:]]*""'
     then
-        emit_context "检测到 CPython/CinderX lab 命令长时间运行后 stdout/stderr 仍为空。请加载 cinderx-remote-lab-ops；先查真实命令、进程、exit status、tmux pane 和日志路径，不要为了补输出盲目重复同一条命令。若怀疑网络卡顿或远程环境异常，及时询问用户。"
+        emit_context "检测到 lab 命令长时间运行后 stdout/stderr 仍为空。按 cinderx-remote-lab-ops 查进程、exit status、tmux pane 和日志；沿用进度与预算策略，不盲目重复命令，只有恢复需超出已有授权或预算时才询问。"
         exit 0
     fi
 fi

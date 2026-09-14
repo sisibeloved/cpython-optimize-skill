@@ -4,7 +4,7 @@ pyperformance 是 driver -> manager -> worker 架构，部分 benchmark 还会�
 
 ## 运行前必查
 
-每次正式 suite、worker 复现或 A/B 对比前，先输出环境契约表：
+首次正式 suite、worker 复现或 A/B 对比时记录环境契约表。源码、解释器、安装、flags、worker venv 或 CPU 分配未变时引用已有证据；变化后重查受影响项：
 
 | 项 | 必查内容 |
 |----|----------|

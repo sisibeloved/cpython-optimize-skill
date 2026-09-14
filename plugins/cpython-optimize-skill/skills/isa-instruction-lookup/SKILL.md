@@ -1,6 +1,6 @@
 ---
 name: isa-instruction-lookup
-description: Use when 需要 A64/x86 指令的官方规格——编码、汇编语法、执行伪代码、FEAT_xxx/CPUID feature 依赖、PDF 页码回溯，按功能描述检索指令，跨平台等价指令比对，或按目标环境已实现 feature 判定指令可用性。分析 JIT 机器码、设计或评审 codegen 优化方案、做平台选型对比的过程中，任何落到具体指令的断言都必须查本库。禁止凭记忆回答指令集规格问题。
+description: Use when 查证 A64/x86 指令语义、编码、操作数或 feature 依赖，检索替代指令与跨平台等价候选。
 ---
 
 # ISA Instruction Lookup

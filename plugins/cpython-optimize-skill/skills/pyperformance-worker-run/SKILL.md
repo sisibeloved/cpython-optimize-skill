@@ -1,6 +1,6 @@
 ---
 name: pyperformance-worker-run
-description: Use when 需要运行单个 pyperformance benchmark 的 run_benchmark.py --worker、bench_command、sitecustomize 或复现 worker 环境变量继承问题。
+description: Use when 复现单个 pyperformance worker，或排查 bench_command/sitecustomize 环境继承。
 ---
 
 # pyperformance Worker Run
@@ -24,7 +24,7 @@ description: Use when 需要运行单个 pyperformance benchmark 的 run_benchma
 - 判断 CinderX JIT 是否启用必须在 worker 内取证：`import cinderx`、`import _cinderx`、`cinderx.__file__`、`cinderx.get_import_error()`、`cinderx.is_initialized()`，并和 jit.log/HIR 中的目标 benchmark 本体对应。
 - Python baseline 不应误继承 CinderX 安装；如果故意比较 CinderX baseline，必须在口径里写清。
 - `--inherit-environ` 至少继承代理、`LD_LIBRARY_PATH`、`PYTHONPATH`、插件开关和 JIT 关键变量。
-- 若 `validation-skill-router` deny 了 worker/helper 命令，不要改用简化命令绕开；先补齐 `pyperformance-env-contract.md` 要求的 worker venv / `.pth` / `--inherit-environ` / JIT 初始化证据，再用 `CPYTHON_OPTIMIZE_HOOK_ACK=1` 前缀重试同一条真实 worker/helper 命令。
+- `validation-skill-router` 对单 worker 注入环境提醒，不额外要求审批。helper 范围不明或命令还会改写环境时可触发 deny；先核对范围、补齐 worker 证据，再用 `CPYTHON_OPTIMIZE_HOOK_ACK=1` 重试原命令。
 - 不能在未完成前置证据时提前加 `CPYTHON_OPTIMIZE_HOOK_ACK=1`；ACK 只表示已经确认真实 worker 环境可用。
 - 分析阶段只增减 debug 变量，尽量保持同一真实 worker 命令。
 
@@ -38,7 +38,7 @@ BENCHMARK=<benchmark-selector> WARMUP=<n> PYTHONJITAUTO=<threshold> DIAG=0 /scri
 
 - `DIAG=0` 是非 debug 性能口径；只有 crash、HIR、JIT 日志定位时才切 `DIAG=1`。
 - 快速 L2 可用于验证方向、复现异常或生成 worker 命令；正式性能结论仍要回到 `pyperformance-suite-run` 的非 debug 正式命令。
-- 文档和报告只写 `<benchmark-selector>`、`<result.json>` 等占位，不硬编码具体 pyperformance 用例名或文件名。
+- 可复用示例使用占位符；实验报告记录真实 benchmark、命令和产物路径。
 
 ## 故障排查 Checklist
 

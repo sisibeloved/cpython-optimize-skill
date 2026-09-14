@@ -1,6 +1,6 @@
 ---
 name: cinderx-parallel-pyperformance
-description: Use when running or preparing NUMA/L3-aware parallel pyperformance validation for CinderX on large ARM64/Linux hosts, especially blue-server-53/Kunpeng-style machines, with adaptive 8-core or 16-core scheduling, CinderX manager/worker venv proof, pyperformance worker injection, SSH proxy setup, full-suite/subset queues, repeated stability runs, or dry-run command plans.
+description: Use when 在 ARM64/Linux 大核主机按 NUMA/L3 隔离并行运行 CinderX pyperformance 或生成 dry-run 计划。
 ---
 
 # CinderX Parallel Pyperformance

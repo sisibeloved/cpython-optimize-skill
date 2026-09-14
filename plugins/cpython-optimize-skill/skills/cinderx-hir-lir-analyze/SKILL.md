@@ -1,6 +1,6 @@
 ---
 name: cinderx-hir-lir-analyze
-description: Use when 需要分析 CinderX HIR、LIR、uop、机器码、deopt、frame layout、调用约定、codegen 形态并输出修改方案。
+description: Use when 分析已进入 CinderX JIT 的 HIR/LIR、机器码或 deopt，形成优化方案。
 ---
 
 # CinderX HIR/LIR Analyze

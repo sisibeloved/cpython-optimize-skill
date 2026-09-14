@@ -1,6 +1,6 @@
 ---
 name: cinderx-jit-entry-check
-description: Use when 需要确认 benchmark 本体是否真的进入 CinderX JIT，排除启动期、第三方包、synthetic code 或 compile storm 误判。
+description: Use when 核实 benchmark 本体是否进入 CinderX JIT，排除启动期和第三方编译干扰。
 ---
 
 # CinderX JIT Entry Check

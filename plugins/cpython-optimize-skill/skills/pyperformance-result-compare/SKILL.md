@@ -1,6 +1,6 @@
 ---
 name: pyperformance-result-compare
-description: Use when 已有 pyperformance run.json 或 speedup.json，需要比较 baseline/candidate、方差、噪声、提交 baseline、收益范围或回归可信度。
+description: Use when 比较已有 pyperformance run.json 或 speedup.json，判断收益、回归与噪声；不启动跑分。
 ---
 
 # pyperformance Result Compare
@@ -30,9 +30,6 @@ description: Use when 已有 pyperformance run.json 或 speedup.json，需要比
 
 ## 反问 Gate
 
-- baseline/candidate `run.json`、`speedup.json` 或口径 baseline 缺失且无法从路径/文件推断时，询问用户。
-- baseline source 缺少 commit/ref、dirty 状态、source path 或用户指定事实源时，询问用户补充 baseline 事实源。
-- 方差或异常值使结论不稳定，需要补跑、扩大样本或降级结论时，询问。
-- 用户要求收益外推到全量，但当前只覆盖单 benchmark 或小集合时，询问是否晋级验证。
-
-输出可信收益、可信回归、baseline source 状态、噪声项、补测建议和不能外推的范围。
+- 无法确定 baseline/candidate 配对或比较含义时，询问缺失事实；不凭文件名猜测实验轴。
+- baseline source、worker 或 affinity 证据缺失时照实报告受限观察与补证要求，不把它当可信收益。
+- 不稳定数据直接标为噪声或证据不足。已有数据分析不启动远程补跑；只有用户要求补测或扩大收益声明时，按已有授权与预算决定运行范围。

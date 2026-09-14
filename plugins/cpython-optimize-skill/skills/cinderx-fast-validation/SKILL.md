@@ -1,6 +1,6 @@
 ---
 name: cinderx-fast-validation
-description: Use when repeated CPython/CinderX validation builds are slow and the task involves cinderx_local.setup_release, release wheel builds, run_gate.py, test_cinderx_release, or pyperformance candidate wheel builds that can safely reuse ccache without modifying the source tree.
+description: Use when CinderX release 构建或 gate 重复编译缓慢，需要用 ccache 复用构建。
 ---
 
 # CinderX Fast Validation

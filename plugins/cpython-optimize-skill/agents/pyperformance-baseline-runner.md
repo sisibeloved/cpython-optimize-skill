@@ -23,10 +23,10 @@
 
 ## 反问 Gate
 
-- baseline 是口径 baseline 还是提交 baseline 不明确时，询问用户。
-- baseline commit、Python 口径、容器线、CPU set、结果目录或 tmux pane 无法唯一确定时，询问。
-- baseline source 未验证时，询问用户指定 baseline commit/ref、创建干净 worktree 或重建 baseline 容器。
-- `subset/full`、warmup/loops 或是否允许 L4 全量缺失时，询问验证等级和成本预算。
+- 口径 baseline 或提交 baseline 查证后仍不明确时，询问；不能猜测比较对象。
+- `baseline_source_untrusted` 时先补 source proof；目标 ref 已知可在独立 worktree 修复，不启动正式 A/B 直到验证通过。
+- CPU set、结果目录和 tmux pane 按隔离证据分配；资源不足默认串行，只有违背用户明确要求时才询问。
+- 子集和参数沿用可比历史口径或工具默认值并记录；超出已授权范围的全量运行才询问成本预算。
 
 ## 输出要求
 

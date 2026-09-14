@@ -13,17 +13,6 @@ from pathlib import Path
 
 ACK_ENV = "CPYTHON_OPTIMIZE_HOOK_ACK"
 
-AGENT_DOCS = {
-    "cinderx-orchestrator": "agents/cinderx-orchestrator.md",
-    "cinderx-environment-verifier": "agents/cinderx-environment-verifier.md",
-    "pyperformance-baseline-runner": "agents/pyperformance-baseline-runner.md",
-    "pyperformance-candidate-runner": "agents/pyperformance-candidate-runner.md",
-    "pyperformance-benchmark-analyst": "agents/pyperformance-benchmark-analyst.md",
-    "cinderx-crash-triager": "agents/cinderx-crash-triager.md",
-    "cinderx-jit-analyst": "agents/cinderx-jit-analyst.md",
-    "cinderx-platform-analyst": "agents/cinderx-platform-analyst.md",
-}
-
 
 def load_payload() -> dict:
     try:
@@ -274,51 +263,61 @@ def is_pyvenv_cfg_mutation(tokens: list[str], command: str) -> bool:
     return False
 
 
-def agents_for_reason(reason: str) -> list[str]:
-    if "pyvenv.cfg" in reason or "pip install" in reason:
-        return ["cinderx-orchestrator", "cinderx-environment-verifier"]
-    if "full pyperformance" in reason:
-        return [
-            "cinderx-orchestrator",
-            "cinderx-environment-verifier",
-            "pyperformance-baseline-runner",
-            "pyperformance-candidate-runner",
-        ]
-    if "targeted pyperformance" in reason:
-        return ["cinderx-orchestrator", "cinderx-environment-verifier", "pyperformance-candidate-runner"]
-    if "pyperf 结果" in reason or "result" in reason:
-        return ["pyperformance-benchmark-analyst"]
-    if "worker" in reason or "helper" in reason:
-        return ["cinderx-orchestrator", "cinderx-environment-verifier", "cinderx-jit-analyst"]
-    if "RuntimeTests" in reason or "test_cinderx" in reason or "run_gate" in reason:
-        return ["cinderx-orchestrator", "cinderx-environment-verifier"]
-    return ["cinderx-orchestrator", "cinderx-environment-verifier"]
-
-
-def agent_hint(reason: str) -> str:
-    agents = agents_for_reason(reason)
-    docs = [AGENT_DOCS[name] for name in agents]
-    return (
-        "建议分派 Agent: "
-        + ", ".join(agents)
-        + "；Agent docs: "
-        + ", ".join(docs)
-        + "。注意 Agent 文档不是原生 Skill 自动触发单元，主 Agent 需要按这些路径读取对应 agent 文档。"
-    )
-
-
 def pyperformance_env_contract_hint(reason: str) -> str:
-    markers = ["pyperformance", "pyperf", "worker", "helper", "pyvenv.cfg"]
+    markers = ["pyperformance 性能测试", "pyperformance worker", "pyperformance helper", "pyvenv.cfg"]
     if not any(marker in reason for marker in markers):
         return ""
     return (
-        "pyperformance 前置检查: 先读取 "
+        "worker 环境证据见 "
         "skills/using-cpython-optimize/references/pyperformance-env-contract.md；"
-        "跑 suite/worker/helper 前必须证明 worker venv 的 pyvenv.cfg、"
+        "核对 worker venv 的 pyvenv.cfg、"
         "include-system-site-packages 或等价 PYTHONPATH、CinderX .pth、"
         "--inherit-environ、worker 内 cinderx.is_initialized() / "
-        "cinderx.get_import_error() 均符合目标口径；"
+        "cinderx.get_import_error() 均符合目标口径；已有匹配证据可复用。"
     )
+
+
+def classify_chunk(chunk: list[str], command: str) -> tuple[str, str]:
+    if is_pyvenv_cfg_mutation(chunk, command):
+        return "deny", "pyvenv.cfg 环境改写; skills: cinderx-env-validate / pyperformance-worker-run / pyperformance-suite-run"
+
+    if is_pip_install_local_project(chunk):
+        return "deny", "pip install local project; skills: cinderx-env-validate / cinderx-env-bootstrap"
+
+    is_perf, perf_module, arg_start = starts_perf_cli(chunk)
+    if is_perf:
+        args = chunk[arg_start:]
+        subcommand = args[0] if args else ""
+        if perf_module == "pyperformance" and subcommand == "run":
+            if has_benchmark_subset(args[1:]):
+                return "context", "targeted pyperformance 性能测试; skills: pyperformance-suite-run"
+            return "deny", "full pyperformance 性能测试; skills: pyperformance-suite-run"
+        if perf_module == "pyperf":
+            if subcommand == "compare_to":
+                return "context", "pyperf 结果命令; skills: pyperformance-result-compare"
+            return "context", "pyperf 结果/性能命令; skills: pyperformance-result-compare / pyperformance-suite-run"
+        return "context", "pyperformance CLI; skills: pyperformance-suite-run / pyperformance-worker-run / pyperformance-result-compare"
+
+    run_gate, run_gate_reason, run_gate_full = is_cinderx_run_gate(chunk)
+    if run_gate:
+        return ("deny", run_gate_reason) if run_gate_full else ("context", run_gate_reason)
+
+    if is_pyperformance_worker_command(chunk):
+        return "context", "pyperformance worker 性能测试; skills: pyperformance-worker-run"
+
+    if is_cinderx_benchmark_helper(chunk):
+        return "deny", "CinderX pyperformance helper 性能测试; skills: pyperformance-worker-run / pyperformance-suite-run"
+
+    runtime, full_suite = is_runtime_test(chunk)
+    if runtime:
+        if full_suite:
+            return "deny", "full RuntimeTests 功能测试; skills: cpython-runtime-test-run"
+        return "context", "targeted RuntimeTests 功能测试 / test_cinderx/lib test 集成测试; skills: cpython-runtime-test-run"
+
+    if is_build_or_test(chunk):
+        return "context", "build/test command; skills: cpython-runtime-test-run"
+
+    return "ignore", ""
 
 
 def classify_command(command: str) -> tuple[str, str]:
@@ -326,45 +325,14 @@ def classify_command(command: str) -> tuple[str, str]:
     if not tokens or has_ack(tokens):
         return "ignore", ""
 
+    context = ("ignore", "")
     for chunk in command_chunks(tokens):
-        if is_pyvenv_cfg_mutation(chunk, command):
-            return "deny", "pyvenv.cfg 环境改写; skills: cinderx-env-validate / pyperformance-worker-run / pyperformance-suite-run"
-
-        if is_pip_install_local_project(chunk):
-            return "deny", "pip install local project"
-
-        is_perf, perf_module, arg_start = starts_perf_cli(chunk)
-        if is_perf:
-            args = chunk[arg_start:]
-            subcommand = args[0] if args else ""
-            if perf_module == "pyperformance" and subcommand == "run":
-                if has_benchmark_subset(args[1:]):
-                    return "deny", "targeted pyperformance 性能测试; skills: pyperformance-suite-run / pyperformance-worker-run"
-                return "deny", "full pyperformance 性能测试; skills: pyperformance-suite-run / pyperformance-worker-run"
-            if perf_module == "pyperf":
-                return "context", "pyperf 结果/性能命令; skills: pyperformance-result-compare / pyperformance-suite-run"
-            return "context", "pyperformance CLI; skills: pyperformance-suite-run / pyperformance-worker-run / pyperformance-result-compare"
-
-        run_gate, run_gate_reason, run_gate_full = is_cinderx_run_gate(chunk)
-        if run_gate:
-            return ("deny", run_gate_reason) if run_gate_full else ("context", run_gate_reason)
-
-        if is_pyperformance_worker_command(chunk):
-            return "deny", "pyperformance worker 性能测试; skills: pyperformance-worker-run"
-
-        if is_cinderx_benchmark_helper(chunk):
-            return "deny", "CinderX pyperformance helper 性能测试; skills: pyperformance-worker-run / pyperformance-suite-run"
-
-        runtime, full_suite = is_runtime_test(chunk)
-        if runtime:
-            if full_suite:
-                return "deny", "full RuntimeTests 功能测试; skills: cpython-runtime-test-run"
-            return "context", "targeted RuntimeTests 功能测试 / test_cinderx/lib test 集成测试; skills: cpython-runtime-test-run"
-
-        if is_build_or_test(chunk):
-            return "context", "build/test command"
-
-    return "ignore", ""
+        action, reason = classify_chunk(chunk, command)
+        if action == "deny":
+            return action, reason
+        if action == "context" and context[0] == "ignore":
+            context = action, reason
+    return context
 
 
 def git_root(cwd: Path) -> Path | None:
@@ -419,22 +387,21 @@ def main() -> int:
 
     if action == "deny":
         emit_deny(
-            "检测到 CPython/CinderX 高成本或会改写环境的验证命令"
-            f"（{reason}）。请先加载 using-cpython-optimize、validation-strategy"
-            "，必要时加载 cinderx-env-validate / cinderx-env-bootstrap / cinderx-remote-lab-ops；"
+            f"CPython/CinderX 验证前置检查（{reason}）。"
+            "全量或范围不明的运行按 validation-strategy 核对范围和预算；"
+            "环境改写核对目标与隔离，保留已有产物。"
             f"{pyperformance_env_contract_hint(reason)}"
-            f"{agent_hint(reason)}"
-            "确认 Python 3.14.3 环境、验证等级、用例范围和输出路径后再执行。"
-            f"若已经完成这些检查，请以 {ACK_ENV}=1 前缀重试原命令。"
+            "只读取当前动作需要的技能；已有授权和匹配证据可复用，不重复询问。"
+            f"完成适用检查后以 {ACK_ENV}=1 前缀重试原命令；"
+            "ACK 不替代用户授权或环境证据，不应全局设置。"
         )
         return 0
 
     emit_context(
-        "检测到 CPython/CinderX 验证/构建命令"
-        f"（{reason}）。请确保已加载 using-cpython-optimize 和 validation-strategy；"
+        f"CPython/CinderX 验证提示（{reason}）。"
         f"{pyperformance_env_contract_hint(reason)}"
-        f"{agent_hint(reason)}"
-        "在运行前确认 Python 3.14.3 环境、测试范围、stdout/stderr 记录方式和失败后的 gdb/HIR 证据路径。"
+        "按需读取对应技能；在已授权范围内继续，记录命令、stdout/stderr、"
+        "exit status 和产物路径。"
     )
     return 0
 

@@ -1,6 +1,6 @@
 ---
 name: cinderx-env-bootstrap
-description: Use when 需要初始化 CPython/CinderX 实验环境、Docker 双线、CinderX editable install、CPython baseline、pyperformance、pip mirror 或容器模板。
+description: Use when 新建或重建 CPython/CinderX lab，准备 Docker 双线、依赖和 smoke。
 ---
 
 # CinderX Env Bootstrap
@@ -35,15 +35,14 @@ bootstrap 完成后必须自检：
 - 本地 clone 有 3.14.3 tag/branch/ref：用独立 worktree 或专用目录切换。
 - 已有 tarball/cache：校验 hash/来源记录和 `Include/patchlevel.h` 后解压到专用目录。
 - 已有容器内源码：校验容器线、`patchlevel.h`、目标解释器和 include 路径后复用。
-- 只有本地来源不可用、用户授权联网，才 fetch/download。
+- 本地来源不可用时，在环境准备授权和网络限制内按需 fetch/download；远端下载仍是最后选项。
 
 ## 反问 Gate
 
-- host、workspace、源码路径、Docker 双线或 Python 微版本缺失且无法唯一推断时，询问用户。
-- 在线依赖下载异常慢时，询问继续等待、切镜像、复用 cache 或中止。
-- 容器内补装 `gdb`、`ripgrep`、`strace`、`perf`、`binutils` 等工具遇到网络慢、metadata 无输出或镜像源异常时，及时反馈并询问继续等待、切镜像、复用 cache、上传离线包或中止。
-- `cinderx-test` 与 `cpython-baseline` 的目标线不明确时，询问是调试线还是正式对照线。
-- 本地 CPython 仓有未提交改动、需要切换 ref、需要 `git fetch --tags` 或要覆盖已有 worktree 时，询问用户。
+- host、目标源码或 Python 口径查证后仍无法确定时，询问实验目标。
+- 用户已要求准备环境时，可在隔离目录复用本地来源、创建 worktree、按需 fetch 或安装依赖；不覆盖当前 checkout。
+- 网络异常先按 `cinderx-remote-lab-ops` 诊断并复用现成 cache。需改变已指定镜像源、扩大成本或覆盖已有产物时才询问。
+- 已证明会影响其他任务或删除用户数据的重建，先列明具体对象并取得相应授权。
 
 ## 内置资源
 

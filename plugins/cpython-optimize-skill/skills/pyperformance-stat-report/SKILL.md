@@ -1,6 +1,6 @@
 ---
 name: pyperformance-stat-report
-description: Use when 已有两个或更多 pyperformance JSON 结果文件，需要用 bundled scripts/get_stat.py 生成多轮统计表、console-only 对比、Excel 表格或分页趋势 PNG 报告。
+description: Use when 将多个已有 pyperformance JSON 转成控制台统计、Excel 或趋势 PNG；不启动跑分。
 ---
 
 # pyperformance Stat Report

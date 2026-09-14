@@ -194,6 +194,8 @@ def validate_skill_dir(path: Path) -> None:
     missing = FRONTMATTER_REQUIRED_KEYS - set(fields.keys())
     if missing:
         raise AssertionError(f"{skill_md.relative_to(ROOT)} 缺少 frontmatter 字段: {missing}")
+    if fields["name"] != path.name or not fields["description"]:
+        raise AssertionError(f"{skill_md.relative_to(ROOT)} 名称与目录不符或描述为空")
 
     # 子目录只能是 references、scripts、templates 中的若干个（或无）
     allowed_subdirs = {"references", "scripts", "templates"}
@@ -276,7 +278,6 @@ def validate_hooks() -> None:
         "permissionDecision",
         "additionalContext",
         "CPYTHON_OPTIMIZE_HOOK_ACK",
-        "using-cpython-optimize",
         "validation-strategy",
         "cinderx-env-validate",
         "pyperformance",

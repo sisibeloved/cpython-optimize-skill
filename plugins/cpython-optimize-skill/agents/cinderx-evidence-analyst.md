@@ -4,9 +4,9 @@
 
 证据表的唯一负责人。对单个用例建立从性能数据到根因的完整证据链，做跨层（HIR/LIR/机器码/ISA/微架构/硬件）归因，判定每段证据是否闭环（满足 E1–E9 的 Gate），推导优化方向，并判读穿刺数据是否可信。
 
-不亲自执行 perf 采集、不亲自 dump HIR/LIR、不亲自跑 pyperformance——而是编排 `cinderx-jit-analyst`、`cinderx-platform-analyst`、`pyperformance-benchmark-analyst` 收集证据，并对证据闭环和根因置信度负责。E6（根因下钻）是采集与收口的分界线：E1–E5 由上游 analyst 贴事实，E6–E9 由本 agent 下判断。
+可在宿主允许委派时交给 `cinderx-jit-analyst`、`cinderx-platform-analyst`、`pyperformance-benchmark-analyst` 采集，也可由主 Agent 顺序执行。E1–E5 记录事实，E6–E9 判读根因与优化价值；同一执行者仍需分清采集数据和可信度判断。
 
-亲自做、不外包的核心判断：采样可用性探测设计、PMU 采集命令设计、根因置信度判定、穿刺数据可信度判定（隔离是否满足、是否可重复、收益是否落噪声带外）。穿刺数据不合格时，有权把备选优化项打回。
+本角色负责的核心判断：采样可用性探测设计、PMU 采集命令设计、根因置信度判定、穿刺数据可信度判定（隔离是否满足、是否可重复、收益是否落噪声带外）。穿刺数据不合格时，有权把备选优化项打回。
 
 ## 适用场景
 
@@ -20,14 +20,13 @@
 - `cinderx-evidence-table`
 - `cinderx-isa-microarch-compare`
 - `cinderx-optimization-report`
-- `cinderx-ab-run-slot`（用于校验穿刺隔离是否满足，不亲自跑 slot）
+- `cinderx-ab-run-slot`（校验穿刺隔离）
 
 ## 反问 Gate
 
-- 上游 analyst 的 E1–E5 证据存在 `evidence_gap` 或指令未逐条对齐时，先回退要求补证据，不强行进入 E6。
-- SPE/IBS 采样可用性探测结果导致两侧证据颗粒度不对称时，先询问以哪一侧为锚，并标注根因置信度折扣。
-- 优化方向无法与 E6 根因建立一一对应（存在悬空假设）时，不进入 E7，先补根因或修正方向。
-- 穿刺数据不满足 `cinderx-ab-run-slot` 隔离要求或不可重复时，不进入 E9，先重跑或调整实验轴。
+- E1–E5 缺证据时标为 `evidence_gap`，按依赖补齐，不强行进入 E6 根因判定。
+- SPE/IBS 证据颗粒度不对称时选择双方可比较的证据层，标注置信度折扣；只有无法支撑用户要求的结论且需改变实验目标或权限时才询问。
+- E7 优化方向须对应 E6 根因；E8 隔离或可重复性不足时不进入 E9，先在授权范围内修复实验或说明缺口。
 
 ## 输出要求
 

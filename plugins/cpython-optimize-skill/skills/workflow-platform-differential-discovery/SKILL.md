@@ -1,11 +1,13 @@
 ---
 name: workflow-platform-differential-discovery
-description: Use when 需要系统分析 CPython/CinderX 代码、Kunpeng/x86 ISA 与微架构差异，发现候选优化点并评估收益范围。
+description: Use when 尚未选定用例，需要从 CPython/CinderX 平台差异中筛选优化候选。
 ---
 
 # Platform Differential Discovery Workflow
 
 ## Agent 分派
+
+下表按当前证据选择所需阶段，已有匹配产物可复用；Agent 列是职责，可由主 Agent 顺序承担，仅在宿主允许且有独立工作时委派。
 
 | 阶段 | Agent | 技能 |
 |------|-------|------|

@@ -27,7 +27,7 @@
 ## 失败时怎么做
 
 返回 `baseline_source_untrusted`，并给出最小修复路径：
-- 让用户指定 baseline commit/ref 或口径 baseline。
+- 先从任务和已有记录查证 baseline commit/ref 与口径 baseline；含义仍不明确时再让用户指定。
 - 在远程环境创建干净 git worktree，再校验 `git status --short` 和 `git show -s --format=%H`。
 - 重建或修复 `cpython-baseline` 容器 bind mount，确认它指向 CPython 3.14.3 baseline source。
 - 清理 baseline 侧 candidate editable install、`.pth`、`PYTHONPATH` 和 JIT hook 污染。
