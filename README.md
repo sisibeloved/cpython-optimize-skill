@@ -1,6 +1,6 @@
 # 🔧 CPython/CinderX 性能优化技能仓库
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](plugins/cpython-optimize-skill/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](plugins/cpython-optimize-skill/CHANGELOG.md)
 [![Codex](https://img.shields.io/badge/Codex-plugin-0A7EA4.svg)](#codex-cli)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-D97757.svg)](#claude-code插件市场)
 [![Skills](https://img.shields.io/badge/skills-35-success.svg)](#-技能一览)
@@ -120,6 +120,16 @@
 codex plugin marketplace add https://github.com/sisibeloved/cpython-optimize-skill
 codex plugin add cpython-optimize-skill@cpython-optimize-skill
 ```
+
+### ISA MCP 运行依赖
+
+ISA 查询服务使用 MCP Python SDK 1.x 的 `FastMCP`。在插件 `.mcp.json` 所使用的 Python 环境中安装兼容依赖；从本仓根目录执行：
+
+```bash
+python3 -m pip install -r plugins/cpython-optimize-skill/mcp/isa-reference/requirements.txt
+```
+
+安装后的插件使用其实际目录下的同名 requirements 文件。MCP 2.x 的 API 已变化，不能直接用于当前服务。
 
 ---
 

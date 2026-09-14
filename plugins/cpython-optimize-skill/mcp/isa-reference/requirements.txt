@@ -1,0 +1,2 @@
+# server.py uses the FastMCP API from the MCP Python SDK v1.
+mcp>=1,<2
